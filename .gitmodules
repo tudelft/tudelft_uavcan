@@ -1,0 +1,9 @@
+[submodule "firmware/lib/chibios"]
+	path = firmware/lib/chibios
+	url = https://github.com/ChibiOS/ChibiOS
+[submodule "firmware/lib/canard"]
+	path = firmware/lib/canard
+	url = https://github.com/UAVCAN/libcanard.git
+[submodule "firmware/lib/public_regulated_data_types"]
+	path = firmware/lib/public_regulated_data_types
+	url = https://github.com/UAVCAN/public_regulated_data_types.git
