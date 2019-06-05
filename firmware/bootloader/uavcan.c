@@ -1,32 +1,9 @@
-#include "ch.h"
-#include "hal.h"
-#include "canard.h"
 #include <string.h>
 #include <stdlib.h>
 
-#include <uavcan/protocol/GetNodeInfo.h>
-#include <uavcan/protocol/dynamic_node_id/Allocation.h>
-
-struct uavcan_iface_t {
-  CANDriver *can_driver;
-  CANConfig can_cfg;
-
-  event_source_t tx_request;
-  mutex_t mutex;
-  void *thread_rx_wa;
-  void *thread_tx_wa;
-  void *thread_uavcan_wa;
-  size_t thread_rx_wa_size;
-  size_t thread_tx_wa_size;
-  size_t thread_uavcan_wa_size;
-
-  uint8_t node_id;
-  CanardInstance canard;
-  uint8_t canard_memory_pool[1024];
-
-  uint32_t send_next_node_id_allocation_request_at_ms;
-  uint8_t node_id_allocation_unique_id_offset;
-};
+#include "uavcan.h"
+#include "node.h"
+#include "firmware_update.h"
 
 #if STM32_CAN_USE_CAN1
 static THD_WORKING_AREA(can1_rx_wa, 256);
@@ -37,7 +14,7 @@ static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
   .can_cfg = {
     CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-    CAN_BTR_LBKM | CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
+    CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
     CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/125000 - 1)
   },
   .thread_rx_wa = can1_rx_wa,
@@ -59,7 +36,7 @@ static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
   .can_cfg = {
     CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-    CAN_BTR_LBKM | CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
+    CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
     CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/125000 - 1)
   },
   .thread_rx_wa = can2_rx_wa,
@@ -115,6 +92,30 @@ int uavcanBroadcast(struct uavcan_iface_t *iface,   ///< The interface to write 
   return res;
 }
 
+// void uavcanLog(struct uavcan_iface_t *iface, char *msg, uint8_t len) {
+//   // char *test = "SUPERCAN";
+//   // uavcan_protocol_debug_LogMessage logMsg;
+//   // logMsg.level.value = UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_DEBUG;
+//   // logMsg.source.data = (uint8_t*)test;
+//   // logMsg.source.len = 0;
+//   // logMsg.text.data = (uint8_t*)msg;
+//   // logMsg.text.len = 0;
+
+//   uint8_t send_buf[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
+//   uint32_t send_len = UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE;//uavcan_protocol_debug_LogMessage_encode(&logMsg, send_buf);
+
+//   uint8_t debug_transfer_id = 100;
+//   //canardBroadcast(&iface->canard, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID, &debug_transfer_id, CANARD_TRANSFER_PRIORITY_LOW, send_buf, send_len);
+//   //chEvtBroadcast(&iface->tx_request);
+//   /*uavcanBroadcast(iface,
+//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE,
+//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID,
+//                                               &debug_transfer_id,
+//                                               CANARD_TRANSFER_PRIORITY_LOW,
+//                                               send_buf,
+//                                               send_len);*/
+// }
+
 /*
  * Receiver thread.
  */
@@ -139,11 +140,10 @@ static THD_FUNCTION(can_rx, p) {
       } else {
         rx_frame.id = rx_msg.SID;
       }
-
+ 
       chMtxLock(&iface->mutex);
       canardHandleRxFrame(&iface->canard, &rx_frame, timestamp);
       chMtxUnlock(&iface->mutex);
-      //palTogglePad(LED2_PORT, LED2_PIN);
     }
   }
   chEvtUnregister(&iface->can_driver->rxfull_event, &el);
@@ -162,8 +162,16 @@ static THD_FUNCTION(can_tx, p) {
   chEvtRegister(&iface->tx_request, &txr, EVENT_MASK(2));
 
   while (true) {
-    if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
+    eventmask_t evts = chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100));
+    if (evts == 0)
       continue;
+
+    // Ignore and clear errors
+    if(evts & EVENT_MASK(1))
+    {
+      chEvtGetAndClearFlags(&txe);
+      continue;
+    }
 
     chMtxLock(&iface->mutex);
     for (const CanardCANFrame* txf = NULL; (txf = canardPeekTxQueue(&iface->canard)) != NULL;) {
@@ -174,7 +182,6 @@ static THD_FUNCTION(can_tx, p) {
       tx_msg.IDE = CAN_IDE_EXT;
       tx_msg.RTR = CAN_RTR_DATA;
       if (canTransmit(iface->can_driver, CAN_ANY_MAILBOX, &tx_msg, TIME_IMMEDIATE) == MSG_OK) {
-        palToggleLine(LED1_LINE);
         canardPopTxQueue(&iface->canard);
       } else {
         // Timeout - just exit and try again later
@@ -203,10 +210,13 @@ static THD_FUNCTION(uavcan_thrd, p) {
     while ((TIME_I2MS(chVTGetSystemTimeX()) < iface->send_next_node_id_allocation_request_at_ms) &&
           (canardGetLocalNodeID(&iface->canard) == CANARD_BROADCAST_NODE_ID))
     {
-      //processTx();
-      //processRx();
-      //canardCleanupStaleTransfers(&canard, AP_HAL::micros64());
+      chMtxLock(&iface->mutex);
+      canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
+      chMtxUnlock(&iface->mutex);
       chThdSleepMilliseconds(500);
+
+      if((iface->send_next_node_id_allocation_request_at_ms - TIME_I2MS(chVTGetSystemTimeX()) > 1000))
+        break;
     }
 
     if (canardGetLocalNodeID(&iface->canard) != CANARD_BROADCAST_NODE_ID)
@@ -237,6 +247,7 @@ static THD_FUNCTION(uavcan_thrd, p) {
 
     // Paranoia time
     memmove(&allocation_request[1], &my_unique_id[iface->node_id_allocation_unique_id_offset], uid_size);
+    palToggleLine(LED1_LINE);
 
     // Broadcasting the request
     const int16_t bcast_res = uavcanBroadcast(iface,
@@ -254,14 +265,29 @@ static THD_FUNCTION(uavcan_thrd, p) {
     // Preparing for timeout; if response is received, this value will be updated from the callback.
     iface->node_id_allocation_unique_id_offset = 0;
   }
+
+  while(true) {
+    broadcast_node_status(iface);
+
+    chMtxLock(&iface->mutex);
+    canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
+    chMtxUnlock(&iface->mutex);
+
+    uartStartSend(&UARTD3, 13, "Starting...\r\n");
+    //palToggleLine(RS485_DE_LINE);
+
+    chThdSleepMilliseconds(500);
+  }
 }
 
 static void handle_allocation_response(struct uavcan_iface_t *iface, CanardRxTransfer* transfer)
 {
+  return;
   // Rule C - updating the randomized time interval
   iface->send_next_node_id_allocation_request_at_ms =
-    TIME_I2MS(chVTGetSystemTimeX()) + UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_MIN_REQUEST_PERIOD_MS +
-    (rand() % UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_MAX_FOLLOWUP_DELAY_MS);
+    TIME_I2MS(chVTGetSystemTimeX()) + 1000;
+
+  return;
 
   if (transfer->source_node_id == CANARD_BROADCAST_NODE_ID)
   {
@@ -326,6 +352,15 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
     handle_allocation_response(iface, transfer);
     return;
   }
+
+  switch (transfer->data_type_id) {
+    case UAVCAN_PROTOCOL_GETNODEINFO_ID:
+      handle_get_node_info(iface, transfer);
+      break;
+    case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
+      handle_begin_frimware_update(iface, transfer);
+      break;
+  }
 }
 
 /**
@@ -381,10 +416,30 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
   chThdCreateStatic(iface->thread_uavcan_wa, iface->thread_uavcan_wa_size, NORMALPRIO + 6, uavcan_thrd, (void*)iface);
 }
 
+/*
+ * UART driver configuration structure.
+ */
+static UARTConfig uart_cfg_1 = {
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  NULL,
+  115200,
+  0,
+  USART_CR2_LINEN,
+  0
+};
+
 /**
  * Initialization of the CAN driver
  */
 void uavcanInit(void) {
+
+  uartStart(&UARTD3, &uart_cfg_1);
+  palSetLine(RS485_DE_LINE);
+  palClearLine(RS485_RE_LINE);
+
   // Activate the interfaces
 #if STM32_CAN_USE_CAN1
 #if defined(CAN1_STBY_LINE)

@@ -56,6 +56,8 @@
 #define LED1_LINE         PAL_LINE(GPIOA, 9U)
 #define CAN1_STBY_LINE    PAL_LINE(GPIOB, 4U)
 #define CAN2_STBY_LINE    PAL_LINE(GPIOB, 7U)
+#define RS485_DE_LINE     PAL_LINE(GPIOA, 15U)
+#define RS485_RE_LINE     PAL_LINE(GPIOC, 0U)
 
 /*
  * I/O ports initial setup, this configuration is established soon after reset
@@ -98,10 +100,10 @@
  * PA12 - 8 - Digital input                    (NC)
  * PA13 - 4 - Digital input                    (JTAG_TMS)
  * PA14 - 4 - Digital input                    (JTAG_TCK)
- * PA15 - 7 - Open Drain output 50MHz.         (RS485_DE)
+ * PA15 - 3 - Push Pull output 50MHz.          (RS485_DE)
  */
 #define VAL_GPIOACRL            0x8800000B      /*  PA7...PA0 */
-#define VAL_GPIOACRH            0x74488478      /* PA15...PA8 */
+#define VAL_GPIOACRH            0x34488478      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
 /*

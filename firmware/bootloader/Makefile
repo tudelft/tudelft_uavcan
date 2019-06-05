@@ -140,7 +140,14 @@ LDSCRIPT= $(BOARDDIR)/$(BOARD)/bl.ld
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
 	     $(CANARDDIR)/canard.c \
-	     uavcan.c \
+       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogLevel.c \
+       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogMessage.c \
+       $(DSDLC_DIR)/uavcan/protocol/protocol_GetNodeInfo.c \
+       $(DSDLC_DIR)/uavcan/protocol/protocol_NodeStatus.c \
+       $(DSDLC_DIR)/uavcan/protocol/protocol_SoftwareVersion.c \
+       $(DSDLC_DIR)/uavcan/protocol/protocol_HardwareVersion.c \
+       $(DSDLC_DIR)/uavcan/protocol/file/file_BeginFirmwareUpdate.c \
+	     uavcan.c node.c firmware_update.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
