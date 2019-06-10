@@ -2,4 +2,5 @@ build/
 .vscode/
 
 bootloader/.dep
+node/.dep
 lib/dsdlc_generated

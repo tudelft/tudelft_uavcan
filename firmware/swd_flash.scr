@@ -1,0 +1,13 @@
+# Print BMPM version
+monitor version
+mon tpwr enable
+# Scan for devices using SWD interface
+monitor swdp_scan
+# Attach to the first device
+attach 1
+# Load the binary into the flash
+load
+# Check if the flash matches the binary
+compare-sections
+# Reset and exit
+kill

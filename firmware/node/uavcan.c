@@ -3,12 +3,11 @@
 
 #include "uavcan.h"
 #include "node.h"
-#include "firmware_update.h"
 
 #if STM32_CAN_USE_CAN1
-static THD_WORKING_AREA(can1_rx_wa, 2048);
-static THD_WORKING_AREA(can1_tx_wa, 2048);
-static THD_WORKING_AREA(can1_uavcan_wa, 2048);
+static THD_WORKING_AREA(can1_rx_wa, 2048*2);
+static THD_WORKING_AREA(can1_tx_wa, 2048*2);
+static THD_WORKING_AREA(can1_uavcan_wa, 2048*2);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
@@ -268,10 +267,10 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    chThdSleepMilliseconds(800);
+    chThdSleepMilliseconds(500);
 
-    if(firmware_update.in_progress)
-      request_fw_file(iface);
+    //uartStartSend(&UARTD3, 13, "Starting...\r\n");
+    //palToggleLine(RS485_DE_LINE);
   }
 }
 
@@ -347,15 +346,16 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
   }
 
   switch (transfer->data_type_id) {
+    case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
+      handle_esc_rawcommand(iface, transfer);
+      break;
+
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       handle_get_node_info(iface, transfer);
       break;
     case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
-      handle_begin_frimware_update(iface, transfer);
-      break;
-    case UAVCAN_PROTOCOL_FILE_READ_ID:
-      if(transfer->transfer_type == CanardTransferTypeResponse)
-        handle_file_read_response(iface, transfer);
+      *((uint32_t *)0x20004FF0) = 0xDEADBEEF;
+      NVIC_SystemReset();
       break;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
       NVIC_SystemReset();
@@ -394,14 +394,15 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
 
 
   switch (data_type_id) {
+    case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
+      *out_data_type_signature = UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_SIGNATURE;
+      return true;
+
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE;
       return true;
     case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_SIGNATURE;
-      return true;
-    case UAVCAN_PROTOCOL_FILE_READ_ID:
-      *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
       return true;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE;

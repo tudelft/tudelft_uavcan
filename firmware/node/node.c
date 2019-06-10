@@ -2,7 +2,6 @@
 #include <stdlib.h>
 
 #include "node.h"
-#include "firmware_update.h"
 
 
 static void makeNodeStatusMessage(
@@ -11,12 +10,8 @@ static void makeNodeStatusMessage(
   memset(buffer, 0, UAVCAN_PROTOCOL_NODESTATUS_MAX_SIZE);
   int uptime_sec = TIME_I2S(chVTGetSystemTimeX());
   uint16_t vdda = 0;
-  uint8_t node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_MAINTENANCE;
+  uint8_t node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_OPERATIONAL;
   uint8_t node_health = UAVCAN_PROTOCOL_NODESTATUS_HEALTH_OK;
-  if(firmware_update.in_progress)
-  {
-    node_mode = UAVCAN_PROTOCOL_NODESTATUS_MODE_SOFTWARE_UPDATE;
-  }
 
   /*
    * Here we're using the helper for demonstrational purposes; in this simple case it could be preferred to
@@ -56,9 +51,9 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
 
     //readUniqueID(pkt.hardware_version.unique_id);
 
-    char name[strlen("SUPERCAN BOOTLOADER") + 1];
-    strcpy(name, "SUPERCAN BOOTLOADER");
-    pkt.name.len = strlen("SUPERCAN BOOTLOADER");
+    char name[strlen("SUPERCAN") + 1];
+    strcpy(name, "SUPERCAN");
+    pkt.name.len = strlen("SUPERCAN");
     pkt.name.data = (uint8_t *)name;
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);

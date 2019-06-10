@@ -85,7 +85,7 @@
 
 /*
  * Port A setup.
- * PA0  - B - Alternate Push Pull output 50MHz (PWM)
+ * PA0  - 3 - Push Pull output 50MHz.          (PWM)
  * PA1  - 0 - Analog input                     (ADC1)
  * PA2  - 0 - Analog input                     (ADC2)
  * PA3  - 0 - Analog input                     (ADC3)
@@ -102,7 +102,7 @@
  * PA14 - 4 - Digital input                    (JTAG_TCK)
  * PA15 - 3 - Push Pull output 50MHz.          (RS485_DE)
  */
-#define VAL_GPIOACRL            0x8800000B      /*  PA7...PA0 */
+#define VAL_GPIOACRL            0x8800000B     /*  PA7...PA0 */
 #define VAL_GPIOACRH            0x34488478      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 

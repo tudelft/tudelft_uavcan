@@ -101,7 +101,7 @@ endif
 #
 
 # Define project name here
-PROJECT = tuc_bl
+PROJECT = tuc_node
 
 # Target settings.
 MCU  ?= cortex-m3
@@ -110,7 +110,7 @@ MCU  ?= cortex-m3
 CHIBIOS  := ../lib/chibios
 BOARDDIR := ../boards
 CONFDIR  := ./cfg
-BUILDDIR := ../build/$(BOARD)/bl
+BUILDDIR := ../build/$(BOARD)/node
 DEPDIR   := ./.dep
 CANARDDIR  := ../lib/canard
 DSDLC_DIR  := ../lib/dsdlc_generated
@@ -129,11 +129,9 @@ include $(CHIBIOS)/os/hal/osal/rt/osal.mk
 include $(CHIBIOS)/os/rt/rt.mk
 include $(CHIBIOS)/os/common/ports/ARMCMx/compilers/GCC/mk/port_v7m.mk
 # Other files (optional).
-include $(CHIBIOS)/os/hal/lib/streams/streams.mk
-include $(CHIBIOS)/os/various/shell/shell.mk
 
 # Define linker script file here
-LDSCRIPT= $(BOARDDIR)/$(BOARD)/bl.ld
+LDSCRIPT= $(BOARDDIR)/$(BOARD)/node.ld
 
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -149,7 +147,7 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/protocol/file/file_BeginFirmwareUpdate.c \
        $(DSDLC_DIR)/uavcan/protocol/file/file_Path.c \
        $(DSDLC_DIR)/uavcan/protocol/file/file_Read.c \
-	     flash.c uavcan.c node.c firmware_update.c \
+	     flash.c uavcan.c node.c esc.c volz_servo.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

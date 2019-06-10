@@ -14,78 +14,69 @@
     limitations under the License.
 */
 
-#include <stdio.h>
-#include <string.h>
+#include <ch.h>
+#include <hal.h>
+#include "uavcan.h"
 
-#include "ch.h"
-#include "hal.h"
+#define APP_START_ADDRESS     0x08008000
 
-#include "shell.h"
-#include "chprintf.h"
+static void
+do_jump(uint32_t stacktop, uint32_t entrypoint)
+{
+  chSysLock();    
 
-//#include "usbcfg.h"
-
-/*===========================================================================*/
-/* Command line related.                                                     */
-/*===========================================================================*/
-
-// #define SHELL_WA_SIZE   THD_WORKING_AREA_SIZE(1024)
-
-// /* Can be measured using dd if=/dev/xxxx of=/dev/null bs=512 count=10000.*/
-// static void cmd_write(BaseSequentialStream *chp, int argc, char *argv[]) {
-//   static uint8_t buf[] =
-//       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
-
-//   (void)argv;
-//   if (argc > 0) {
-//     chprintf(chp, "Usage: write\r\n");
-//     return;
-//   }
-
-//   while (chnGetTimeout((BaseChannel *)chp, TIME_IMMEDIATE) == Q_TIMEOUT) {
-//     /* Writing in channel mode.*/
-//     chnWrite(&SDU1, buf, sizeof buf - 1);
-//   }
-//   chprintf(chp, "\r\n\nstopped\r\n");
-// }
-
-// static const ShellCommand commands[] = {
-//   {"write", cmd_write},
-//   {NULL, NULL}
-// };
-
-// static const ShellConfig shell_cfg1 = {
-//   (BaseSequentialStream *)&SDU1,
-//   commands
-// };
-
-/*===========================================================================*/
-/* Generic code.                                                             */
-/*===========================================================================*/
-
-/*
- * Red LED blinker thread, times are in milliseconds.
- */
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
-
-  (void)arg;
-  chRegSetThreadName("blinker");
-  while (true) {
-    systime_t time = 500;
-    //palClearLine(LED1_LINE);
-    chThdSleepMilliseconds(time);
-    //palSetLine(LED1_LINE);
-    chThdSleepMilliseconds(time);
-  }
+  asm volatile(
+    "mov sp, %0	\n"
+    "msr msp, %0	\n"
+    "bx	%1	\n"
+    : : "r"(stacktop), "r"(entrypoint) :);
 }
 
-extern void uavcanInit(void);
+void jump_to_app(void)
+{
+  const uint32_t *app_base = (const uint32_t *)(APP_START_ADDRESS);
+
+  /*
+    * We hold back the programming of the lead words until the upload
+    * is marked complete by the host. So if they are not 0xffffffff,
+    * we should try booting it.
+    */
+  if (app_base[0] == 0xffffffff) {
+    return;
+  }
+
+  /*
+    * The second word of the app is the entrypoint; it must point within the
+    * flash area (or we have a bad flash).
+    */
+  if (app_base[1] < APP_START_ADDRESS) {
+    return;
+  }
+
+  /*if (app_base[1] >= (APP_START_ADDRESS + board_info.fw_size)) {
+      return;
+  }*/
+  
+  // disable all interrupt sources
+  port_disable();
+
+  /* switch exception handlers to the application */
+  SCB->VTOR = APP_START_ADDRESS;
+
+  /* extract the stack and entrypoint from the app vector table and go */
+  do_jump(app_base[0], app_base[1]);
+}
 
 /*
  * Application entry point.
  */
 int main(void) {
+  bool goto_app = true;
+  if (*((uint32_t *)0x20004FF0) == 0xDEADBEEF) {
+    *((uint32_t *)0x20004FF0) = 0x0;
+    goto_app = false;
+  }
+
 
   /*
    * System initializations.
@@ -97,47 +88,17 @@ int main(void) {
   halInit();
   chSysInit();
 
-  // /*
-  //  * Initializes a serial-over-USB CDC driver.
-  //  */
-  // sduObjectInit(&SDU1);
-  // sduStart(&SDU1, &serusbcfg);
-
-  // /*
-  //  * Activates the USB driver and then the USB bus pull-up on D+.
-  //  * Note, a delay is inserted in order to not have to disconnect the cable
-  //  * after a reset.
-  //  */
-  // usbDisconnectBus(serusbcfg.usbp);
-  // chThdSleepMilliseconds(1000);
-  // usbStart(serusbcfg.usbp, &usbcfg);
-  // usbConnectBus(serusbcfg.usbp);
-
-  // /*
-  //  * Shell manager initialization.
-  //  */
-  // shellInit();
-
   /* 
    * Initialize the uavcan driver
    */
   uavcanInit();
 
   /*
-   * Creates the blinker thread.
-   */
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
-
-  /*
-   * Normal main() thread activity, spawning shells.
+   * Normal main() thread activity, wait to boot normal app
    */
   while (true) {
-    // if (SDU1.config->usbp->state == USB_ACTIVE) {
-    //   thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
-    //                                           "shell", NORMALPRIO + 1,
-    //                                           shellThread, (void *)&shell_cfg1);
-    //   chThdWait(shelltp);               /* Waiting termination.             */
-    // }
-    chThdSleepMilliseconds(1000);
+    chThdSleepMilliseconds(20000);
+    if(goto_app)
+      jump_to_app();
   }
 }
