@@ -54,7 +54,7 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     pkt.software_version.major = 1;
     pkt.software_version.minor = 0;
 
-    //readUniqueID(pkt.hardware_version.unique_id);
+    memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
     char name[strlen("SUPERCAN BOOTLOADER") + 1];
     strcpy(name, "SUPERCAN BOOTLOADER");

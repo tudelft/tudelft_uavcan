@@ -1,5 +1,8 @@
 #include "esc.h"
 
+#include "config.h"
+#include "volz_servo.h"
+
 #include <ch.h>
 #include <hal.h>
 
@@ -27,7 +30,13 @@ static PWMConfig pwmcfg = {
 #define PWM_CMD_TO_US(_t) (1000000 * _t / 400)
 #endif
 
+static uint8_t esc_idx = 0;
+static uint8_t servo_idx = 1;
+
 void esc_init(void) {
+  esc_idx = config_get_by_name("ESC index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
+  servo_idx = config_get_by_name("SERVO index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
+
   pwmStart(&PWMD5, &pwmcfg);
   pwmEnableChannel(&PWMD5, 0, 1000);
 }
@@ -35,16 +44,23 @@ void esc_init(void) {
 /*
   handle a GET_NODE_INFO request
  */
-void handle_esc_rawcommand(struct uavcan_iface_t *iface, CanardRxTransfer* transfer)
+void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)), CanardRxTransfer* transfer)
 {
-  int16_t cmd0 = 0;
-  canardDecodeScalar(transfer, 0, 14, true, (void*)&cmd0);
-  if(cmd0 < 0) cmd0 = 0;
+  uint8_t cnt = (transfer->payload_len * 8) / 14;
+  int16_t commands[UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH];
+  uint32_t offset = 0;
 
-  uint16_t pwm_cmd = 1000 + (cmd0*1000/8191);
+  for(uint8_t i = 0; i < cnt; i++) {
+    canardDecodeScalar(transfer, offset, 14, true, (void*)&commands[i]);
+    offset += 14;
+  }
+
+
+  int16_t esc_cmd = commands[esc_idx];
+  if(esc_cmd < 0) esc_cmd = 0;
+
+  uint16_t pwm_cmd = 1000 + (esc_cmd*1000/8191);
   pwmEnableChannel(&PWMD5, 0, pwm_cmd);
 
-  int16_t cmd1 = 0;
-  canardDecodeScalar(transfer, 14, 14, true, (void*)&cmd1);
-  volz_servo_set(cmd1);
+  volz_servo_set(commands[servo_idx]);
 }

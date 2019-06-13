@@ -5,6 +5,7 @@
 #include "uavcan.h"
 
 struct firmware_update_t {
+  struct uavcan_iface_t *iface;
   bool in_progress;
   char path[200];
   uint8_t transfer_id;
@@ -17,7 +18,7 @@ struct firmware_update_t {
 };
 
 extern struct firmware_update_t firmware_update;
-void handle_begin_frimware_update(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
+void handle_begin_firmware_update(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
 void handle_file_read_response(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
 void request_fw_file(struct uavcan_iface_t *iface);
 

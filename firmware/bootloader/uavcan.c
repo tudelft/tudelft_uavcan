@@ -6,9 +6,9 @@
 #include "firmware_update.h"
 
 #if STM32_CAN_USE_CAN1
-static THD_WORKING_AREA(can1_rx_wa, 2048);
-static THD_WORKING_AREA(can1_tx_wa, 2048);
-static THD_WORKING_AREA(can1_uavcan_wa, 2048);
+static THD_WORKING_AREA(can1_rx_wa, 1024*2);
+static THD_WORKING_AREA(can1_tx_wa, 1024*2);
+static THD_WORKING_AREA(can1_uavcan_wa, 2048*2);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
@@ -28,9 +28,9 @@ static struct uavcan_iface_t can1_iface = {
 #endif
 
 #if STM32_CAN_USE_CAN2
-static THD_WORKING_AREA(can2_rx_wa, 2048);
-static THD_WORKING_AREA(can2_tx_wa, 2048);
-static THD_WORKING_AREA(can2_uavcan_wa, 2048);
+static THD_WORKING_AREA(can2_rx_wa, 1024*2);
+static THD_WORKING_AREA(can2_tx_wa, 1024*2);
+static THD_WORKING_AREA(can2_uavcan_wa, 2048*2);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
@@ -84,37 +84,13 @@ int uavcanBroadcast(struct uavcan_iface_t *iface,   ///< The interface to write 
                     const void* payload,            ///< Transfer payload
                     uint16_t payload_len)           ///< Length of the above, in bytes
 {
-  int res;
+  int res = 0;
   chMtxLock(&iface->mutex);
   res = canardBroadcast(&iface->canard, data_type_signature, data_type_id, inout_transfer_id, priority, payload, payload_len);
   chMtxUnlock(&iface->mutex);
   chEvtBroadcast(&iface->tx_request);
   return res;
 }
-
-// void uavcanLog(struct uavcan_iface_t *iface, char *msg, uint8_t len) {
-//   // char *test = "SUPERCAN";
-//   // uavcan_protocol_debug_LogMessage logMsg;
-//   // logMsg.level.value = UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_DEBUG;
-//   // logMsg.source.data = (uint8_t*)test;
-//   // logMsg.source.len = 0;
-//   // logMsg.text.data = (uint8_t*)msg;
-//   // logMsg.text.len = 0;
-
-//   uint8_t send_buf[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
-//   uint32_t send_len = UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE;//uavcan_protocol_debug_LogMessage_encode(&logMsg, send_buf);
-
-//   uint8_t debug_transfer_id = 100;
-//   //canardBroadcast(&iface->canard, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID, &debug_transfer_id, CANARD_TRANSFER_PRIORITY_LOW, send_buf, send_len);
-//   //chEvtBroadcast(&iface->tx_request);
-//   /*uavcanBroadcast(iface,
-//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE,
-//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID,
-//                                               &debug_transfer_id,
-//                                               CANARD_TRANSFER_PRIORITY_LOW,
-//                                               send_buf,
-//                                               send_len);*/
-// }
 
 /*
  * Receiver thread.
@@ -132,6 +108,7 @@ static THD_FUNCTION(can_rx, p) {
       continue;
     chMtxLock(&iface->mutex);
     while (canReceive(iface->can_driver, CAN_ANY_MAILBOX, &rx_msg, TIME_IMMEDIATE) == MSG_OK) {
+      palToggleLine(LED1_LINE);
       // Process message.
       const uint32_t timestamp = TIME_I2US(chVTGetSystemTimeX());
       memcpy(rx_frame.data, rx_msg.data8, 8);
@@ -155,6 +132,7 @@ static THD_FUNCTION(can_rx, p) {
 static THD_FUNCTION(can_tx, p) {
   event_listener_t txc, txe, txr;
   struct uavcan_iface_t *iface = (struct uavcan_iface_t *)p;
+  uint8_t err_cnt = 0;
 
   chRegSetThreadName("can_tx");
   chEvtRegister(&iface->can_driver->txempty_event, &txc, EVENT_MASK(0));
@@ -181,9 +159,19 @@ static THD_FUNCTION(can_tx, p) {
       tx_msg.IDE = CAN_IDE_EXT;
       tx_msg.RTR = CAN_RTR_DATA;
       if (canTransmit(iface->can_driver, CAN_ANY_MAILBOX, &tx_msg, TIME_IMMEDIATE) == MSG_OK) {
+        err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
+        // After 100 retries giveup
+        if(err_cnt >= 100) {
+          err_cnt = 0;
+          canardPopTxQueue(&iface->canard);
+          continue;
+        }
+
         // Timeout - just exit and try again later
+        err_cnt++;
+        chThdSleepMilliseconds(err_cnt * 5);
         continue;
       }
     }
@@ -268,9 +256,9 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    chThdSleepMilliseconds(800);
+    chThdSleepMilliseconds(400);
 
-    if(firmware_update.in_progress)
+    if(firmware_update.in_progress && firmware_update.iface == iface)
       request_fw_file(iface);
   }
 }
@@ -351,7 +339,7 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
       handle_get_node_info(iface, transfer);
       break;
     case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
-      handle_begin_frimware_update(iface, transfer);
+      handle_begin_firmware_update(iface, transfer);
       break;
     case UAVCAN_PROTOCOL_FILE_READ_ID:
       if(transfer->transfer_type == CanardTransferTypeResponse)

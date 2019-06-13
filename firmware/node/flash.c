@@ -22,6 +22,8 @@ static void flash_unlock(void)
 
 /* Erase the page containing this address */
 void flash_erase_page(void *addr) {
+  chSysLock();
+  addr = addr  - ((uint32_t)addr % FLASH_PAGE_SIZE);
   uint16_t i = 0;
   uint32_t *p = (uint32_t *)(addr);
   for (i = 0; i < FLASH_PAGE_SIZE; ++i)
@@ -33,6 +35,7 @@ void flash_erase_page(void *addr) {
   }
   if(i == FLASH_PAGE_SIZE) {
     /* already empty - no erase necessary */
+    chSysUnlock();
     return;
   }
 
@@ -44,18 +47,19 @@ void flash_erase_page(void *addr) {
   flash_wait_nb();
   FLASH->CR &= ~FLASH_CR_PER;
   FLASH->CR |= FLASH_CR_LOCK;
+  chSysUnlock();
 }
 
 /* Erase pages starting from the address until a certain size and return the last erased address */
-void* flash_erase_pages(void *start_addr, uint64_t size) {
-  void *addr = start_addr;
+uint32_t flash_erase_pages(uint32_t start_addr, uint64_t size) {
+  uint32_t addr = start_addr - (start_addr % FLASH_PAGE_SIZE);
+  size += (start_addr % FLASH_PAGE_SIZE);
   do {
-    flash_erase_page(addr);
+    flash_erase_page((void *)addr);
     addr += FLASH_PAGE_SIZE;
   } while(addr <= start_addr+size);
 
-  uint32_t last_page = ((uint32_t)addr - FLASH_PAGE_SIZE) / FLASH_PAGE_SIZE;
-  return (void *)(last_page * FLASH_PAGE_SIZE);
+  return (addr - 1);
 }
 
 /* compare flash content with given array.
@@ -79,17 +83,13 @@ int flash_verify_block(void *adr, uint8_t *data, uint16_t len)
   return 1;
 }
 
-static inline void putreg16(uint16_t val, unsigned int addr)
-{
-    __asm__ __volatile__("\tstrh %0, [%1]\n\t": : "r"(val), "r"(addr));
-}
-
 /* writes len bytes of data to adr.
  * data and addr need to be half-word aligned!
  * len should be an even number of bytes!
  */
 void flash_write_block(void *adr, uint8_t *data, uint16_t len)
 {
+  chSysLock();
   uint16_t i = 0;
   volatile uint16_t *flash = (volatile uint16_t *)adr;
   uint16_t *v = (uint16_t *)data;
@@ -101,11 +101,11 @@ void flash_write_block(void *adr, uint8_t *data, uint16_t len)
   {
     if (flash[i] != v[i])
     {
-      //flash[i] = v[i];
-      putreg16(v[i], &flash[i]);
+      flash[i] = v[i];
       flash_wait_nb();
     }
   }
   FLASH->CR &= ~FLASH_CR_PG;
   FLASH->CR |= FLASH_CR_LOCK;
+  chSysUnlock();
 }

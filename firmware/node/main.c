@@ -19,6 +19,7 @@
 
 #include <ch.h>
 #include <hal.h>
+#include "config.h"
 #include "uavcan.h"
 #include "esc.h"
 
@@ -61,8 +62,8 @@ int main(void) {
   /* 
    * Initialize the uavcan driver
    */
+  config_init();
   uavcanInit();
-
   esc_init();
   volz_servo_init();
 

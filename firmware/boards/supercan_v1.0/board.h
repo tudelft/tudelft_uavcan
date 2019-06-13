@@ -114,7 +114,7 @@
  * PB3  - 8 - Digital input                    (NC)
  * PB4  - F - Alternate Open Drain output 50MHz.  (CAN1_STBY)
  * PB5  - 4 - Digital input                    (CAN2_RX)
- * PB6  - B - Alternate Push Pull output 50MHz (CAN2_TX)
+ * PB6  - B - Alternate Open Drain output 50MHz (CAN2_TX)
  * PB7  - 7 - Open Drain output 50MHz.          (CAN2_STBY)
  * PB8  - 4 - Digital input.                   (CAN1_RX)
  * PB9  - B - Alternate Open Drain output 50MHz.(CAN1_TX)

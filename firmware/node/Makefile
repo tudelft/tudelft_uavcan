@@ -147,7 +147,12 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/protocol/file/file_BeginFirmwareUpdate.c \
        $(DSDLC_DIR)/uavcan/protocol/file/file_Path.c \
        $(DSDLC_DIR)/uavcan/protocol/file/file_Read.c \
-	     flash.c uavcan.c node.c esc.c volz_servo.c \
+       $(DSDLC_DIR)/uavcan/protocol/param/param_GetSet.c \
+       $(DSDLC_DIR)/uavcan/protocol/param/param_Value.c \
+       $(DSDLC_DIR)/uavcan/protocol/param/param_Empty.c \
+       $(DSDLC_DIR)/uavcan/protocol/param/param_NumericValue.c \
+       $(DSDLC_DIR)/uavcan/protocol/param/param_ExecuteOpcode.c \
+	     flash.c config.c uavcan.c node.c esc.c volz_servo.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

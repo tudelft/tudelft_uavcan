@@ -30,7 +30,7 @@ struct uavcan_iface_t {
 
   uint8_t node_id;
   CanardInstance canard;
-  uint8_t canard_memory_pool[1024];
+  uint8_t canard_memory_pool[1024*2];
 
   // Dynamic node id allocation
   uint32_t send_next_node_id_allocation_request_at_ms;

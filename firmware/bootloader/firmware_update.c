@@ -8,7 +8,7 @@ struct firmware_update_t firmware_update;
 #define APP_MAX_SIZE          0x30000
 
 /* Handle a firmware update request */
-void handle_begin_frimware_update(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
+void handle_begin_firmware_update(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
   uint8_t buffer[UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_MAX_SIZE];
   uint8_t err_msg[UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_OPTIONAL_ERROR_MESSAGE_MAX_LENGTH];
   uavcan_protocol_file_BeginFirmwareUpdateResponse resp = {0};
@@ -35,6 +35,7 @@ void handle_begin_frimware_update(struct uavcan_iface_t *iface, CanardRxTransfer
     flash_erase_pages(APP_START_ADDRESS, APP_MAX_SIZE);
 
     // Reset the firmware update status
+    firmware_update.iface = iface;
     firmware_update.transfer_id = 0;
     firmware_update.file_offset = 0;
     firmware_update.last_erased_offset = 0;
@@ -134,9 +135,4 @@ void handle_file_read_response(struct uavcan_iface_t *iface __attribute__((unuse
       flash_write_block((void *)APP_START_ADDRESS, (uint8_t *)&firmware_update.first_word, 4);
       jump_to_app();
     }
-
-    // show offset number we are flashing in kbyte as crude progress indicator
-    //node_status.vendor_specific_status_code = 1 + (fw_update.ofs / 1024U);
-
-    //fw_update.last_ms = 0;
 }

@@ -47,6 +47,7 @@ void __early_init(void) {
  */
 void boardInit(void) {
     AFIO->MAPR |= AFIO_MAPR_CAN_REMAP_REMAP2;
+    AFIO->MAPR |= AFIO_MAPR_CAN2_REMAP;
     AFIO->MAPR |= AFIO_MAPR_USART3_REMAP_PARTIALREMAP;
     
     //AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_NOJNTRST;

@@ -2,11 +2,12 @@
 #include <stdlib.h>
 
 #include "uavcan.h"
+#include "config.h"
 #include "node.h"
 
 #if STM32_CAN_USE_CAN1
-static THD_WORKING_AREA(can1_rx_wa, 2048*2);
-static THD_WORKING_AREA(can1_tx_wa, 2048*2);
+static THD_WORKING_AREA(can1_rx_wa, 1024*2);
+static THD_WORKING_AREA(can1_tx_wa, 1024*2);
 static THD_WORKING_AREA(can1_uavcan_wa, 2048*2);
 
 static struct uavcan_iface_t can1_iface = {
@@ -27,9 +28,9 @@ static struct uavcan_iface_t can1_iface = {
 #endif
 
 #if STM32_CAN_USE_CAN2
-static THD_WORKING_AREA(can2_rx_wa, 2048);
-static THD_WORKING_AREA(can2_tx_wa, 2048);
-static THD_WORKING_AREA(can2_uavcan_wa, 2048);
+static THD_WORKING_AREA(can2_rx_wa, 1024*2);
+static THD_WORKING_AREA(can2_tx_wa, 1024*2);
+static THD_WORKING_AREA(can2_uavcan_wa, 2048*2);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
@@ -152,7 +153,7 @@ static THD_FUNCTION(can_rx, p) {
  * Transmitter thread.
  */
 static THD_FUNCTION(can_tx, p) {
-  event_listener_t txc, txe, txr;
+    event_listener_t txc, txe, txr;
   struct uavcan_iface_t *iface = (struct uavcan_iface_t *)p;
 
   chRegSetThreadName("can_tx");
@@ -172,6 +173,7 @@ static THD_FUNCTION(can_tx, p) {
     }
 
     chMtxLock(&iface->mutex);
+    static uint8_t err_cnt = 0;
     for (const CanardCANFrame* txf = NULL; (txf = canardPeekTxQueue(&iface->canard)) != NULL;) {
       CANTxFrame tx_msg;
       tx_msg.DLC = txf->data_len;
@@ -180,9 +182,19 @@ static THD_FUNCTION(can_tx, p) {
       tx_msg.IDE = CAN_IDE_EXT;
       tx_msg.RTR = CAN_RTR_DATA;
       if (canTransmit(iface->can_driver, CAN_ANY_MAILBOX, &tx_msg, TIME_IMMEDIATE) == MSG_OK) {
+        err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
+        // After 5 retries giveup
+        if(err_cnt >= 5) {
+          err_cnt = 0;
+          canardPopTxQueue(&iface->canard);
+          continue;
+        }
+
         // Timeout - just exit and try again later
+        err_cnt++;
+        chThdSleepMilliseconds(err_cnt * 50);
         continue;
       }
     }
@@ -349,6 +361,9 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
     case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
       handle_esc_rawcommand(iface, transfer);
       break;
+    case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+      handle_param_getset(iface, transfer);
+      break;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       handle_get_node_info(iface, transfer);
@@ -397,6 +412,9 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
     case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
       *out_data_type_signature = UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_SIGNATURE;
       return true;
+    case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+      *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+      return true;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_GETNODEINFO_SIGNATURE;
@@ -418,7 +436,11 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
   chEvtObjectInit(&iface->tx_request);
   canardInit(&iface->canard, iface->canard_memory_pool, sizeof(iface->canard_memory_pool),
     onTransferReceived, shouldAcceptTransfer, iface);
-  //canardSetLocalNodeID(&iface->canard, iface->node_id);
+
+  // Set the node ID from the config
+  iface->node_id = config_get_by_name("NODE id", 0)->val.i;
+  if(iface->node_id != CANARD_BROADCAST_NODE_ID)
+    canardSetLocalNodeID(&iface->canard, iface->node_id);
 
   canStart(iface->can_driver, &iface->can_cfg);
   chThdCreateStatic(iface->thread_rx_wa, iface->thread_rx_wa_size, NORMALPRIO + 8, can_rx, (void*)iface);

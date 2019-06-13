@@ -17,6 +17,7 @@
 #include <ch.h>
 #include <hal.h>
 #include "uavcan.h"
+#include "firmware_update.h"
 
 #define APP_START_ADDRESS     0x08008000
 
@@ -97,8 +98,8 @@ int main(void) {
    * Normal main() thread activity, wait to boot normal app
    */
   while (true) {
-    chThdSleepMilliseconds(20000);
-    if(goto_app)
+    chThdSleepMilliseconds(15000);
+    if(!firmware_update.in_progress && goto_app)
       jump_to_app();
   }
 }
