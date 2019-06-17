@@ -22,6 +22,7 @@
 #include "config.h"
 #include "uavcan.h"
 #include "esc.h"
+#include "volz_servo.h"
 
 /*===========================================================================*/
 /* Generic code.                                                             */

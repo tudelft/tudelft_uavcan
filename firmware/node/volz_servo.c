@@ -4,8 +4,8 @@
 #include <hal.h>
 #include "config.h"
 
-static void end_cb(UARTDriver *uartp) {
-    palClearLine(RS485_DE_LINE);
+static void end_cb(UARTDriver *uartp __attribute__((unused))) {
+  palClearLine(RS485_DE_LINE);
 }
 
 /*
@@ -44,9 +44,9 @@ static void calc_crc(uint8_t *data) {
   data[5] = crc & 0xFF;
 }
 
-static void write_cmd(uint8_t cmd, uint8_t arg1, uint8_t arg2, uint8_t *resp) {
+static void write_cmd(uint8_t cmd, uint8_t target, uint8_t arg1, uint8_t arg2, uint8_t *resp, uint8_t timeout_ms) {
   uint8_t resp_data[6];
-  uint8_t data[6] = {cmd, 0x01, arg1, arg2, 0x00, 0x00};
+  uint8_t data[6] = {cmd, target, arg1, arg2, 0x00, 0x00};
   calc_crc(data);
 
   palSetLine(RS485_DE_LINE);
@@ -56,11 +56,15 @@ static void write_cmd(uint8_t cmd, uint8_t arg1, uint8_t arg2, uint8_t *resp) {
     resp = resp_data;
 
   size_t recv_size = 6;
-  uartReceiveTimeout(&UARTD3, &recv_size, (void *)resp, TIME_MS2I(2));
+  uartReceiveTimeout(&UARTD3, &recv_size, (void *)resp, TIME_MS2I(timeout_ms));
 }
 
 static void write_eeprom(uint8_t addr, uint8_t value) {
-  write_cmd(0xE8, addr, value, NULL);
+  write_cmd(0xE8, addr, 0x1F, value, NULL, 14);
+}
+
+static void access_eeprom(void) {
+  write_cmd(0xFF, 0x1F, 0x41, 0x3F, NULL, 14);
 }
 
 void volz_servo_init(void) {
@@ -73,6 +77,7 @@ void volz_servo_init(void) {
   max_power = config_get_by_name("SERVO max-power", 0)->val.i;
   stall_power = config_get_by_name("SERVO stall-power", 0)->val.i;
 
+  access_eeprom();
   write_eeprom(0x20, d_gain);
   write_eeprom(0x21, p_gain);
   write_eeprom(0x24, max_power);
@@ -83,7 +88,7 @@ int16_t last_val = 0;
 void volz_servo_set(int16_t val) {
   if(val != last_val) {
     uint16_t cmd = 0x0800 + ((float)val / 8191.0 * 0x360 );
-    write_cmd(0xDD, (cmd >> 7)&0x1F, cmd&0x7F, NULL);
+    write_cmd(0xDD, 0x01, (cmd >> 7)&0x1F, cmd&0x7F, NULL, 2);
     last_val = val;
   }
 }

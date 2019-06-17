@@ -4,6 +4,7 @@
 #include "uavcan.h"
 #include "config.h"
 #include "node.h"
+#include "esc.h"
 
 #if STM32_CAN_USE_CAN1
 static THD_WORKING_AREA(can1_rx_wa, 1024*2);
@@ -153,8 +154,9 @@ static THD_FUNCTION(can_rx, p) {
  * Transmitter thread.
  */
 static THD_FUNCTION(can_tx, p) {
-    event_listener_t txc, txe, txr;
+  event_listener_t txc, txe, txr;
   struct uavcan_iface_t *iface = (struct uavcan_iface_t *)p;
+  uint8_t err_cnt = 0;
 
   chRegSetThreadName("can_tx");
   chEvtRegister(&iface->can_driver->txempty_event, &txc, EVENT_MASK(0));
@@ -173,7 +175,6 @@ static THD_FUNCTION(can_tx, p) {
     }
 
     chMtxLock(&iface->mutex);
-    static uint8_t err_cnt = 0;
     for (const CanardCANFrame* txf = NULL; (txf = canardPeekTxQueue(&iface->canard)) != NULL;) {
       CANTxFrame tx_msg;
       tx_msg.DLC = txf->data_len;
@@ -185,8 +186,8 @@ static THD_FUNCTION(can_tx, p) {
         err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
-        // After 5 retries giveup
-        if(err_cnt >= 5) {
+        // After 100 retries giveup
+        if(err_cnt >= 100) {
           err_cnt = 0;
           canardPopTxQueue(&iface->canard);
           continue;
@@ -194,7 +195,7 @@ static THD_FUNCTION(can_tx, p) {
 
         // Timeout - just exit and try again later
         err_cnt++;
-        chThdSleepMilliseconds(err_cnt * 50);
+        chThdSleepMilliseconds(err_cnt * 5);
         continue;
       }
     }

@@ -106,6 +106,13 @@ PROJECT = tuc_node
 # Target settings.
 MCU  ?= cortex-m3
 
+# Version information
+GIT_DESC := $(shell git describe --dirty --always --tags)
+SOFT_HASH := $(shell git log -1 --pretty=format:%h 2> /dev/null)
+SOFT_VER := $(shell echo $(GIT_DESC) | sed 's/[^0-9.]*\([0-9.]*\).*/\1/')
+SOFT_VER_MAJOR := $(shell echo $(GIT_DESC) | sed 's/v\([0-9]*\).*/\1/')
+SOFT_VER_MINOR := $(shell echo $(GIT_DESC) | sed 's/v[0-9]*.\([0-9]*\).*/\1/')
+
 # Imported source files and paths.
 CHIBIOS  := ../lib/chibios
 BOARDDIR := ../boards
@@ -201,6 +208,8 @@ CPPWARN = -Wall -Wextra -Wundef
 
 # List all user C define here, like -D_DEBUG=1
 UDEFS = -DCANARD_ENABLE_CUSTOM_BUILD_CONFIG=1
+UDEFS += -DGIT_DESC=$(GIT_DESC) -DSOFT_HASH=0x$(SOFT_HASH)
+UDEFS += -DSOFT_VER=$(SOFT_VER) -DSOFT_VER_MAJOR=$(SOFT_VER_MAJOR) -DSOFT_VER_MINOR=$(SOFT_VER_MINOR)
 
 # Define ASM defines here
 UADEFS =

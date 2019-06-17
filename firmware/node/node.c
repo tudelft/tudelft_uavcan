@@ -46,9 +46,13 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     uavcan_protocol_GetNodeInfoResponse pkt = {0};
 
     //pkt.status = {};
-    pkt.software_version.major = 1;
-    pkt.software_version.minor = 0;
+    pkt.software_version.major = SOFT_VER_MAJOR;
+    pkt.software_version.minor = SOFT_VER_MINOR;
+    pkt.software_version.optional_field_flags = UAVCAN_PROTOCOL_SOFTWAREVERSION_OPTIONAL_FIELD_FLAG_VCS_COMMIT;
+    pkt.software_version.vcs_commit = SOFT_HASH;
 
+    pkt.hardware_version.major = 1;
+    pkt.hardware_version.minor = 0;
     memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
     char name[strlen("SUPERCAN") + 1];

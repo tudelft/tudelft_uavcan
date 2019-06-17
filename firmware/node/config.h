@@ -2,6 +2,7 @@
 #define CONFIG_H
 
 #include <stdint.h>
+#include "uavcan.h"
 
 enum config_type_t {
   CONFIG_TYPE_EMPTY,
@@ -41,5 +42,6 @@ extern void config_save(void);
 extern void config_read(void);
 extern void config_reset(void);
 extern struct config_item_t *config_get_by_name(char* name, uint8_t len);
+void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
 
 #endif /* CONFIG_H */

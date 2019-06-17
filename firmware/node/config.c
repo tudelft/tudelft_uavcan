@@ -2,7 +2,6 @@
 
 #include <string.h>
 #include "flash.h"
-#include "uavcan.h"
 
 #define CONFIG_ADDR_CRC     (0x08008000 + 0x20000)
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
@@ -11,6 +10,7 @@ struct config_item_t config_items[] = {
     {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = CANARD_MIN_NODE_ID, .max.i = CANARD_MAX_NODE_ID},
     {.name = "NODE timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
     {.name = "ESC index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 254},
+    {.name = "ESC failsafe", .type = CONFIG_TYPE_INT, .val.i = 1000, .def.i = 1000, .min.i = 750, .max.i = 2400},
     {.name = "SERVO type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
     {.name = "SERVO index", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 254},
     {.name = "SERVO P-gain", .type = CONFIG_TYPE_INT, .val.i = 75, .def.i = 75, .min.i = 0, .max.i = 100},
