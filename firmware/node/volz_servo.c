@@ -27,6 +27,7 @@ static uint8_t p_gain = 75;
 static uint8_t d_gain = 40;
 static uint8_t max_power = 80;
 static uint8_t stall_power = 45;
+static uint8_t servo_type = 0;
 
 static void calc_crc(uint8_t *data) {
   uint16_t crc = 0xFFFF;
@@ -60,11 +61,11 @@ static void write_cmd(uint8_t cmd, uint8_t target, uint8_t arg1, uint8_t arg2, u
 }
 
 static void write_eeprom(uint8_t addr, uint8_t value) {
-  write_cmd(0xE8, addr, 0x1F, value, NULL, 14);
+  write_cmd(0xE8, addr, 0x1F, value, NULL, 15);
 }
 
 static void access_eeprom(void) {
-  write_cmd(0xFF, 0x1F, 0x41, 0x3F, NULL, 14);
+  write_cmd(0xFF, 0x1F, 0x41, 0x3F, NULL, 15);
 }
 
 void volz_servo_init(void) {
@@ -72,16 +73,24 @@ void volz_servo_init(void) {
   palClearLine(RS485_DE_LINE);
   palClearLine(RS485_RE_LINE);
 
+  servo_type = config_get_by_name("SERVO type", 0)->val.i;
   p_gain = config_get_by_name("SERVO P-gain", 0)->val.i;
   d_gain = config_get_by_name("SERVO D-gain", 0)->val.i;
   max_power = config_get_by_name("SERVO max-power", 0)->val.i;
   stall_power = config_get_by_name("SERVO stall-power", 0)->val.i;
 
-  access_eeprom();
-  write_eeprom(0x20, d_gain);
-  write_eeprom(0x21, p_gain);
-  write_eeprom(0x24, max_power);
-  write_eeprom(0x25, stall_power);
+  if(servo_type == 0) {
+    access_eeprom();
+    write_eeprom(0x20, d_gain);
+    write_eeprom(0x21, p_gain);
+    write_eeprom(0x24, max_power);
+    write_eeprom(0x25, stall_power);
+
+    struct config_item_t *servo_config_type = config_get_by_name("SERVO type", 0);
+    servo_config_type->val.i = 1;
+    config_save();
+    NVIC_SystemReset();
+  }
 }
 
 int16_t last_val = 0;
