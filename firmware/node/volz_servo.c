@@ -46,7 +46,7 @@ static void calc_crc(uint8_t *data) {
 }
 
 static void write_cmd(uint8_t cmd, uint8_t target, uint8_t arg1, uint8_t arg2, uint8_t *resp, uint8_t timeout_ms) {
-  uint8_t resp_data[6];
+  uint8_t resp_data[12];
   uint8_t data[6] = {cmd, target, arg1, arg2, 0x00, 0x00};
   calc_crc(data);
 
@@ -56,12 +56,12 @@ static void write_cmd(uint8_t cmd, uint8_t target, uint8_t arg1, uint8_t arg2, u
   if(resp == NULL)
     resp = resp_data;
 
-  size_t recv_size = 6;
+  size_t recv_size = 12;
   uartReceiveTimeout(&UARTD3, &recv_size, (void *)resp, TIME_MS2I(timeout_ms));
 }
 
 static void write_eeprom(uint8_t addr, uint8_t value) {
-  write_cmd(0xE8, addr, 0x1F, value, NULL, 15);
+  write_cmd(0xE8, 0x1F, addr, value, NULL, 15);
 }
 
 static void access_eeprom(void) {
@@ -79,25 +79,19 @@ void volz_servo_init(void) {
   max_power = config_get_by_name("SERVO max-power", 0)->val.i;
   stall_power = config_get_by_name("SERVO stall-power", 0)->val.i;
 
-  if(servo_type == 0) {
-    access_eeprom();
-    write_eeprom(0x20, d_gain);
-    write_eeprom(0x21, p_gain);
-    write_eeprom(0x24, max_power);
-    write_eeprom(0x25, stall_power);
-
-    struct config_item_t *servo_config_type = config_get_by_name("SERVO type", 0);
-    servo_config_type->val.i = 1;
-    config_save();
-    NVIC_SystemReset();
-  }
+  /* Update servo settings */
+  access_eeprom();
+  write_eeprom(0x20, d_gain);
+  write_eeprom(0x21, p_gain);
+  write_eeprom(0x24, max_power);
+  write_eeprom(0x25, stall_power);
 }
 
-int16_t last_val = 0;
+int16_t last_val = -10000;
 void volz_servo_set(int16_t val) {
-  if(val != last_val) {
+  if(val != last_val && val < 8191 && val > -8191) {
     uint16_t cmd = 0x0800 + ((float)val / 8191.0 * 0x360 );
-    write_cmd(0xDD, 0x01, (cmd >> 7)&0x1F, cmd&0x7F, NULL, 2);
+    write_cmd(0xDD, 0x01, (cmd >> 7)&0x1F, cmd&0x7F, NULL, 1);
     last_val = val;
   }
 }

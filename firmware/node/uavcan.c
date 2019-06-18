@@ -7,9 +7,9 @@
 #include "esc.h"
 
 #if STM32_CAN_USE_CAN1
-static THD_WORKING_AREA(can1_rx_wa, 1024*2);
-static THD_WORKING_AREA(can1_tx_wa, 1024*2);
-static THD_WORKING_AREA(can1_uavcan_wa, 2048*2);
+static THD_WORKING_AREA(can1_rx_wa, 1024*3);
+static THD_WORKING_AREA(can1_tx_wa, 1024*3);
+static THD_WORKING_AREA(can1_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
@@ -29,9 +29,9 @@ static struct uavcan_iface_t can1_iface = {
 #endif
 
 #if STM32_CAN_USE_CAN2
-static THD_WORKING_AREA(can2_rx_wa, 1024*2);
-static THD_WORKING_AREA(can2_tx_wa, 1024*2);
-static THD_WORKING_AREA(can2_uavcan_wa, 2048*2);
+static THD_WORKING_AREA(can2_rx_wa, 1024*3);
+static THD_WORKING_AREA(can2_tx_wa, 1024*3);
+static THD_WORKING_AREA(can2_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
@@ -186,8 +186,8 @@ static THD_FUNCTION(can_tx, p) {
         err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
-        // After 100 retries giveup
-        if(err_cnt >= 100) {
+        // After 5 retries giveup
+        if(err_cnt >= 5) {
           err_cnt = 0;
           canardPopTxQueue(&iface->canard);
           continue;
@@ -281,9 +281,6 @@ static THD_FUNCTION(uavcan_thrd, p) {
     chMtxUnlock(&iface->mutex);
 
     chThdSleepMilliseconds(500);
-
-    //uartStartSend(&UARTD3, 13, "Starting...\r\n");
-    //palToggleLine(RS485_DE_LINE);
   }
 }
 
@@ -365,6 +362,9 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
     case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
       handle_param_getset(iface, transfer);
       break;
+    case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
+      handle_param_execute_opcode(iface, transfer);
+      break;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       handle_get_node_info(iface, transfer);
@@ -415,6 +415,9 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
       return true;
     case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
+      return true;
+    case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
+      *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE;
       return true;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:

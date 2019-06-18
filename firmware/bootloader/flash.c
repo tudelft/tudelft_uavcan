@@ -89,7 +89,6 @@ int flash_verify_block(void *adr, uint8_t *data, uint16_t len)
  */
 void flash_write_block(void *adr, uint8_t *data, uint16_t len)
 {
-  chSysLock();
   uint16_t i = 0;
   volatile uint16_t *flash = (volatile uint16_t *)adr;
   uint16_t *v = (uint16_t *)data;
@@ -107,5 +106,4 @@ void flash_write_block(void *adr, uint8_t *data, uint16_t len)
   }
   FLASH->CR &= ~FLASH_CR_PG;
   FLASH->CR |= FLASH_CR_LOCK;
-  chSysUnlock();
 }

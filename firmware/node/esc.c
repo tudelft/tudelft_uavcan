@@ -55,11 +55,15 @@ void esc_init(void) {
 /*
   handle a GET_NODE_INFO request
  */
+#define ESC_RAWCOMMAND_CNT 10
 void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)), CanardRxTransfer* transfer)
 {
   uint8_t cnt = (transfer->payload_len * 8) / 14;
   int16_t commands[UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH];
   uint32_t offset = 0;
+
+  if(cnt != ESC_RAWCOMMAND_CNT || esc_idx >= cnt || servo_idx >= cnt)
+    return;
 
   for(uint8_t i = 0; i < cnt; i++) {
     canardDecodeScalar(transfer, offset, 14, true, (void*)&commands[i]);

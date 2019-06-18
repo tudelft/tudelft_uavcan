@@ -3,11 +3,11 @@
 #include <string.h>
 #include "flash.h"
 
-#define CONFIG_ADDR_CRC     (0x08008000 + 0x30800)
+#define CONFIG_ADDR_CRC     (0x08008000 + 0x30000)
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
 
 struct config_item_t config_items[] = {
-    {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = CANARD_MIN_NODE_ID, .max.i = CANARD_MAX_NODE_ID},
+    {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = 0, .max.i = CANARD_MAX_NODE_ID},
     {.name = "NODE timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
     {.name = "ESC index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 254},
     {.name = "ESC failsafe", .type = CONFIG_TYPE_INT, .val.i = 1000, .def.i = 1000, .min.i = 750, .max.i = 2400},
@@ -131,10 +131,10 @@ static void config_set_resp(struct config_item_t *item, uavcan_protocol_param_Ge
         case CONFIG_TYPE_STRING:
             resp->value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_STRING_VALUE;
             resp->value.string_value.data = (uint8_t *)item->val.s;
-            resp->value.string_value.len = (uint8_t )strlen(item->val.s);
+            resp->value.string_value.len = (uint8_t)strlen(item->val.s);
             resp->default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_STRING_VALUE;
             resp->default_value.string_value.data = (uint8_t *)item->def.s;
-            resp->default_value.string_value.len = (uint8_t )strlen(item->def.s);
+            resp->default_value.string_value.len = (uint8_t)strlen(item->def.s);
             break;
     }
 }
@@ -171,7 +171,6 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
                     item->val.i = req.value.integer_value;
                     resp.value.union_tag = item->type;
                     resp.value.integer_value = item->val.i;
-                    config_save();
                     break;
                 default:
                     break;
@@ -194,6 +193,36 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
                            transfer->source_node_id,
                            UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE,
                            UAVCAN_PROTOCOL_PARAM_GETSET_ID,
+                           &transfer->transfer_id,
+                           transfer->priority,
+                           CanardResponse,
+                           buffer,
+                           total_size);
+}
+
+void handle_param_execute_opcode(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
+    uint8_t buffer[UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_RESPONSE_MAX_SIZE];
+    uavcan_protocol_param_ExecuteOpcodeResponse resp = {0};
+    uavcan_protocol_param_ExecuteOpcodeRequest req = {0};
+
+    if(uavcan_protocol_param_ExecuteOpcodeRequest_decode(transfer, transfer->payload_len, &req, NULL) < 0)
+        return;
+
+    resp.ok = false;
+    if(req.opcode == UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_ERASE) {
+        config_reset();
+        config_save();
+        resp.ok = true;
+    } else if(req.opcode == UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_SAVE) {
+        config_save();
+        resp.ok = true;
+    }
+
+    uint16_t total_size = uavcan_protocol_param_ExecuteOpcodeResponse_encode(&resp, buffer);
+    uavcanRequestOrRespond(iface,
+                           transfer->source_node_id,
+                           UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE,
+                           UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID,
                            &transfer->transfer_id,
                            transfer->priority,
                            CanardResponse,

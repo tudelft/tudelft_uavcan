@@ -43,5 +43,6 @@ extern void config_read(void);
 extern void config_reset(void);
 extern struct config_item_t *config_get_by_name(char* name, uint8_t len);
 void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
+void handle_param_execute_opcode(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
 
 #endif /* CONFIG_H */
