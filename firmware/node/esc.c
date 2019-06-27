@@ -34,6 +34,7 @@ static uint8_t esc_idx = 0;
 static uint16_t esc_failsafe = 1000;
 static uint8_t servo_idx = 1;
 static uint32_t node_timeout = 100;
+static uint8_t servo_type = 0;
 
 static virtual_timer_t esc_timeout_vt;
 
@@ -45,6 +46,7 @@ void esc_init(void) {
   esc_idx = config_get_by_name("ESC index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
   esc_failsafe = config_get_by_name("ESC failsafe", 0)->val.i;
   servo_idx = config_get_by_name("SERVO index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
+  servo_type = config_get_by_name("SERVO type", 0)->val.i;
   node_timeout = config_get_by_name("NODE timeout (ms)", 0)->val.i;
 
   chVTObjectInit(&esc_timeout_vt);
@@ -77,7 +79,8 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   uint16_t pwm_cmd = 1000 + (esc_cmd*1000/8191);
   pwmEnableChannel(&PWMD5, 0, pwm_cmd);
 
-  volz_servo_set(commands[servo_idx]);
+  if(servo_type == 0)
+    volz_servo_set(commands[servo_idx]);
 
   // Enable timeout
   chVTSet(&esc_timeout_vt, TIME_MS2I(node_timeout), esc_timeout_cb, NULL);

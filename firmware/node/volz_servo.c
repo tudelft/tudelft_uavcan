@@ -80,11 +80,13 @@ void volz_servo_init(void) {
   stall_power = config_get_by_name("SERVO stall-power", 0)->val.i;
 
   /* Update servo settings */
-  access_eeprom();
-  write_eeprom(0x20, d_gain);
-  write_eeprom(0x21, p_gain);
-  write_eeprom(0x24, max_power);
-  write_eeprom(0x25, stall_power);
+  if(servo_type == 0) {
+    access_eeprom();
+    write_eeprom(0x20, d_gain);
+    write_eeprom(0x21, p_gain);
+    write_eeprom(0x24, max_power);
+    write_eeprom(0x25, stall_power);
+  }
 }
 
 int16_t last_val = -10000;
