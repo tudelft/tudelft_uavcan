@@ -3,7 +3,7 @@
 #include <string.h>
 #include "flash.h"
 
-#define CONFIG_ADDR_CRC     (0x08008000 + 0x30000)
+#define CONFIG_ADDR_CRC     (0x08008000 + 0x30800)
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
 
 struct config_item_t config_items[] = {

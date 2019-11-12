@@ -7,16 +7,16 @@
 #include "esc.h"
 
 #if STM32_CAN_USE_CAN1
-static THD_WORKING_AREA(can1_rx_wa, 1024*3);
-static THD_WORKING_AREA(can1_tx_wa, 1024*3);
-static THD_WORKING_AREA(can1_uavcan_wa, 2048*3);
+static THD_WORKING_AREA(can1_rx_wa, 1024*4);
+static THD_WORKING_AREA(can1_tx_wa, 1024*4);
+static THD_WORKING_AREA(can1_uavcan_wa, 2048*4);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
   .can_cfg = {
     CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
     CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/125000 - 1)
+    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/1000000 - 1)
   },
   .thread_rx_wa = can1_rx_wa,
   .thread_rx_wa_size = sizeof(can1_rx_wa),
@@ -29,16 +29,16 @@ static struct uavcan_iface_t can1_iface = {
 #endif
 
 #if STM32_CAN_USE_CAN2
-static THD_WORKING_AREA(can2_rx_wa, 1024*3);
-static THD_WORKING_AREA(can2_tx_wa, 1024*3);
-static THD_WORKING_AREA(can2_uavcan_wa, 2048*3);
+static THD_WORKING_AREA(can2_rx_wa, 1024*4);
+static THD_WORKING_AREA(can2_tx_wa, 1024*4);
+static THD_WORKING_AREA(can2_uavcan_wa, 2048*4);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
   .can_cfg = {
     CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
     CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/125000 - 1)
+    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/1000000 - 1)
   },
   .thread_rx_wa = can2_rx_wa,
   .thread_rx_wa_size = sizeof(can2_rx_wa),
@@ -186,16 +186,18 @@ static THD_FUNCTION(can_tx, p) {
         err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
-        // After 5 retries giveup
-        if(err_cnt >= 5) {
+        // After 20 retries giveup
+        if(err_cnt >= 20) {
           err_cnt = 0;
           canardPopTxQueue(&iface->canard);
           continue;
         }
 
         // Timeout - just exit and try again later
+        chMtxUnlock(&iface->mutex);
         err_cnt++;
         chThdSleepMilliseconds(err_cnt * 5);
+        chMtxLock(&iface->mutex);
         continue;
       }
     }

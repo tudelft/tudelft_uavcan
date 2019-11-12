@@ -46,6 +46,9 @@ static void calc_crc(uint8_t *data) {
 }
 
 static void write_cmd(uint8_t cmd, uint8_t target, uint8_t arg1, uint8_t arg2, uint8_t *resp, uint8_t timeout_ms) {
+  if(servo_type == 2)
+    return;
+    
   uint8_t resp_data[12];
   uint8_t data[6] = {cmd, target, arg1, arg2, 0x00, 0x00};
   calc_crc(data);
@@ -80,7 +83,7 @@ void volz_servo_init(void) {
   stall_power = config_get_by_name("SERVO stall-power", 0)->val.i;
 
   /* Update servo settings */
-  if(servo_type == 0) {
+  if(servo_type == 1) {
     access_eeprom();
     write_eeprom(0x20, d_gain);
     write_eeprom(0x21, p_gain);
@@ -91,7 +94,7 @@ void volz_servo_init(void) {
 
 int16_t last_val = -10000;
 void volz_servo_set(int16_t val) {
-  if(val != last_val && val < 8191 && val > -8191) {
+  if(servo_type == 1 && val != last_val && val < 8191 && val > -8191) {
     uint16_t cmd = 0x0800 + ((float)val / 8191.0 * 0x360 );
     write_cmd(0xDD, 0x01, (cmd >> 7)&0x1F, cmd&0x7F, NULL, 1);
     last_val = val;

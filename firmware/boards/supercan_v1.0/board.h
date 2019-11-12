@@ -24,7 +24,7 @@
 /*
  * Board identifier.
  */
-#define BOARD_LISA_M2
+#define BOARD_SUPERCAN_V1
 #define BOARD_NAME              "Supercan V1.0"
 
 /*
@@ -85,13 +85,13 @@
 
 /*
  * Port A setup.
- * PA0  - 3 - Push Pull output 50MHz.          (PWM)
+ * PA0  - B - Push Pull output 50MHz.          (PWM1)
  * PA1  - 0 - Analog input                     (ADC1)
  * PA2  - 0 - Analog input                     (ADC2)
  * PA3  - 0 - Analog input                     (ADC3)
  * PA4  - 0 - Analog input                     (ADC4)
  * PA5  - 0 - Analog input                     (v1_sense)
- * PA6  - 8 - Digital input.                   (NC)
+ * PA6  - B - Push Pull output 50MHz.          (PWM2)
  * PA7  - 8 - Digital input.                   (NC)
  * PA8  - 8 - Digital input.                   (NC)
  * PA9  - 7 - Open Drain output 50MHz.         (LED)
@@ -102,7 +102,7 @@
  * PA14 - 4 - Digital input                    (JTAG_TCK)
  * PA15 - 3 - Push Pull output 50MHz.          (RS485_DE)
  */
-#define VAL_GPIOACRL            0x8800000B     /*  PA7...PA0 */
+#define VAL_GPIOACRL            0x8B00000B      /*  PA7...PA0 */
 #define VAL_GPIOACRH            0x34488478      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
