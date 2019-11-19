@@ -276,13 +276,15 @@ static THD_FUNCTION(uavcan_thrd, p) {
   }
 
   while(true) {
+    chThdSleepMilliseconds(100);
     broadcast_node_status(iface);
+    chThdSleepMilliseconds(250);
+    broadcast_esc_status(iface);
+    chThdSleepMilliseconds(150);
 
     chMtxLock(&iface->mutex);
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
-
-    chThdSleepMilliseconds(500);
   }
 }
 

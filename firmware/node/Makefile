@@ -159,6 +159,7 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/protocol/param/param_Empty.c \
        $(DSDLC_DIR)/uavcan/protocol/param/param_NumericValue.c \
        $(DSDLC_DIR)/uavcan/protocol/param/param_ExecuteOpcode.c \
+       $(DSDLC_DIR)/uavcan/equipment/esc/esc_Status.c \
 	     flash.c config.c uavcan.c node.c esc.c volz_servo.c \
        main.c
 

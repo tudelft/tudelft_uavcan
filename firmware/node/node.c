@@ -2,6 +2,27 @@
 #include <stdlib.h>
 
 #include "node.h"
+#include "esc.h"
+
+void broadcast_esc_status(struct uavcan_iface_t *iface) {
+  // Set the values
+  uavcan_equipment_esc_Status escStatus;
+  escStatus.error_count = 0;
+  escStatus.voltage = esc_telem_data.voltage;
+  escStatus.current = esc_telem_data.current;
+  escStatus.temperature = esc_telem_data.temp + 274.15f;
+  escStatus.rpm = esc_telem_data.erpm / 14; //FIXME
+  escStatus.esc_index = esc_idx;
+
+  uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
+  uint16_t total_size = uavcan_equipment_esc_Status_encode(&escStatus, buffer);
+
+  static uint8_t transfer_id;
+  uavcanBroadcast(iface,
+      UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE,
+      UAVCAN_EQUIPMENT_ESC_STATUS_ID, &transfer_id,
+      CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+}
 
 
 static void makeNodeStatusMessage(
