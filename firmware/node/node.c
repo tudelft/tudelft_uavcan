@@ -7,7 +7,7 @@
 void broadcast_esc_status(struct uavcan_iface_t *iface) {
   // Set the values
   uavcan_equipment_esc_Status escStatus;
-  escStatus.error_count = 0;
+  escStatus.error_count = esc_telem_data.consumption;
   escStatus.voltage = esc_telem_data.voltage;
   escStatus.current = esc_telem_data.current;
   escStatus.temperature = esc_telem_data.temp + 274.15f;
