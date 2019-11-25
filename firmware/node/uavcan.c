@@ -374,10 +374,12 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
       handle_get_node_info(iface, transfer);
       break;
     case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
+      esc_disable();
       *((uint32_t *)0x20004FF0) = 0xDEADBEEF;
       NVIC_SystemReset();
       break;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
+      esc_disable();
       NVIC_SystemReset();
       break;
   }

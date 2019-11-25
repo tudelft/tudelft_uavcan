@@ -156,6 +156,11 @@ void esc_init(void) {
   esc_init_done = true;
 }
 
+void esc_disable(void) {
+  pwmDisableChannel(&PWMD5, 0);
+  pwmDisableChannel(&PWMD3, 0);
+}
+
 /*
   handle a RAW_COMMAND request
  */

@@ -14,6 +14,7 @@ struct esc_telem_data_t {
 extern struct esc_telem_data_t esc_telem_data;
 extern uint8_t esc_idx;
 void esc_init(void);
+void esc_disable(void);
 void handle_esc_rawcommand(struct uavcan_iface_t *iface, CanardRxTransfer* transfer);
 
 #endif /* ESC_H */
