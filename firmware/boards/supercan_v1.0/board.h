@@ -53,6 +53,7 @@
  * IO pins assignments
  */
 
+#define ESC_LINE          PAL_LINE(GPIOA, 0U)
 #define LED1_LINE         PAL_LINE(GPIOA, 9U)
 #define CAN1_STBY_LINE    PAL_LINE(GPIOB, 4U)
 #define CAN2_STBY_LINE    PAL_LINE(GPIOB, 7U)

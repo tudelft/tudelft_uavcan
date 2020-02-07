@@ -369,6 +369,9 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
     case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
       handle_param_execute_opcode(iface, transfer);
       break;
+    case UAVCAN_TUNNEL_CALL_ID:
+      handle_tunnel_call(iface, transfer);
+      break;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       handle_get_node_info(iface, transfer);
@@ -424,6 +427,9 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
       return true;
     case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_SIGNATURE;
+      return true;
+    case UAVCAN_TUNNEL_CALL_ID:
+      *out_data_type_signature = UAVCAN_TUNNEL_CALL_SIGNATURE;
       return true;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:

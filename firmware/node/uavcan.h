@@ -17,6 +17,8 @@
 #include <uavcan/equipment/esc/Status.h>
 #include <uavcan/protocol/param/GetSet.h>
 #include <uavcan/protocol/param/ExecuteOpcode.h>
+#include <uavcan/protocol/param/ExecuteOpcode.h>
+#include <uavcan/tunnel/Call.h>
 
 
 struct uavcan_iface_t {

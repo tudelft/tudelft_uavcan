@@ -5,6 +5,7 @@
 
 #include <ch.h>
 #include <hal.h>
+#include <string.h>
 
 struct esc_telem_data_t esc_telem_data;
 uint8_t esc_idx = 0;
@@ -73,10 +74,10 @@ static UARTConfig uart_telem_cfg = {
 
 static void pwm_cb(PWMDriver *pwmp __attribute__((unused))) {
   // Reset to original pwm command
-  if(req_telem) {
+  /*if(req_telem) {
     req_telem = false;
     pwmEnableChannelI(&PWMD5, 0, 30);
-  } else
+  } else*/
     pwmEnableChannelI(&PWMD5, 0, pwm_cmd);
 }
 
@@ -89,10 +90,10 @@ static void esc_timeout_cb(void *arg __attribute__((unused))) {
 
 static void esc_telem_cb(void *arg __attribute__((unused))) {
   // Request for telemetry
-  req_telem = true;
+  //req_telem = true;
 
   chSysLockFromISR();
-  pwmEnableChannelI(&PWMD5, 0, 30);
+  //pwmEnableChannelI(&PWMD5, 0, 30);
   chVTSetI(&esc_telem_vt, TIME_MS2I(500), esc_telem_cb, NULL);
   chSysUnlockFromISR();
 }
@@ -110,9 +111,10 @@ static THD_FUNCTION(esc_telem_thd, arg) {
     uint8_t resp[10];
     // Try to receive bytes
     if(uartReceiveTimeout(&UARTD1, &recv_size, (void *)resp, TIME_MS2I(350)) == MSG_OK) {
+        
       // Verify the CRC and size
       if(recv_size == 10 && get_crc8(resp, 9) == resp[9]) {
-        palToggleLine(LED1_LINE);
+        //palToggleLine(LED1_LINE);
 
         uint16_t volt_u = (resp[1] << 8) | resp[2];
         uint16_t curr_u = (resp[3] << 8) | resp[4];
@@ -125,6 +127,7 @@ static THD_FUNCTION(esc_telem_thd, arg) {
         esc_telem_data.erpm = erpm_u * 100;
       }
     }
+      //handle_tunnel_call(NULL, NULL);
   }
 }
 
@@ -197,6 +200,218 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 
   // Enable timeout
   chVTSet(&esc_timeout_vt, TIME_MS2I(node_timeout), esc_timeout_cb, NULL);
+}
+
+#define SetIOHigh() {palSetLine(ESC_LINE);}
+#define SetIOLow() {palClearLine(ESC_LINE);}
+
+static bool send_next_bit( uint8_t c )
+{
+  static int bit = 9;
+  
+  // Startbit
+  if (bit == 9) {
+    // Output
+    SetIOLow();
+    bit--;
+    return true;
+  }
+  
+  // Stopbit
+  if (bit == 0) {
+    // Output
+    SetIOHigh();
+    
+    // Reset bit counter
+    bit = 9;
+    return false; // ready
+  }
+  
+  // Data
+  if( c & (1<<(9-bit-1)) ) {
+    SetIOHigh();
+  } else {
+    SetIOLow();
+  }
+
+  bit--;
+  return true;
+}
+
+bool parse_bit_x4(uint8_t pin, uint8_t* byte) {
+  static uint8_t step = 0;
+  static uint8_t reply = 0;
+  
+  // If idle, search for start
+  if (step ==0) {
+    // Start is low
+    if (pin == 0){
+      // reset result
+      reply = 0x00;
+      step++;
+    }
+    return false; // no data  
+  } else {
+    step++;
+    
+    // 1 = first low
+    // Sample on step 2
+    switch(step)
+    {
+      // case 2: = start bit
+      case 6:
+        reply |= pin;
+        break;
+      case 10:
+        reply |= pin<<1;
+        break;
+      case 14:
+        reply |= pin<<2;
+        break;
+      case 18:
+        reply |= pin<<3;
+        break;
+      case 22:
+        reply |= pin<<4;
+        break;
+      case 26:
+        reply |= pin<<5;
+        break;
+      case 30:
+        reply |= pin<<6;
+        break;
+      case 34:
+        reply |= pin<<7;
+        break;
+      // case 38: stop bit
+      case 39: // stop bit 75%, this is ready enough
+        // Check if bit is high, otherwise count error
+        
+        // Store result
+        *byte = reply;
+        // Reset parser state machine        
+        step = 0;        
+        return true; // has data
+        
+    }
+  }
+
+  return false;
+}
+
+static bool esc_bb_setup = false;
+uint32_t send_size;
+uint32_t send_idx = 0;
+uint32_t recv_size;
+uint32_t recv_idx = 0;
+uint8_t send_buf[1024];
+uint8_t recv_buf[1024];
+uint8_t BootInit[] = {0,0,0,0,0,0,0,0,0,0,0,0,0x0D,'B','L','H','e','l','i',0xF4,0x7D};
+static uint32_t recv_timeout = 0;
+
+static void esc_uart_bb(GPTDriver *gptp __attribute__((unused))) {
+  static uint8_t i = 0;
+
+  // Sending
+  if(send_idx < send_size) {
+    recv_timeout = 0;
+    if(i%4 == 0) {
+      if(!send_next_bit(send_buf[send_idx]))
+        send_idx++;
+
+      if(send_idx >= send_size)
+        palSetLineMode(ESC_LINE, PAL_MODE_INPUT);
+    }
+    i++;
+  }
+  // Receiving
+  else if(((recv_timeout < 50 && recv_size > 0) || (recv_timeout < 5000 && recv_size == 0)) && recv_size < 1024) {
+    uint8_t bit = palReadLine(ESC_LINE)? 1:0;
+    uint8_t byte;
+    
+    if(parse_bit_x4(bit, &byte)) {
+      recv_timeout = 0;
+      recv_buf[recv_size++] = byte;
+    }
+    else
+      recv_timeout++;
+  }
+  else if(recv_size >= 1024)
+    recv_timeout = 90000;
+}
+
+static GPTConfig gpt2cfg =
+{
+    1000000,         /* timer clock.*/
+    esc_uart_bb,     /* Timer callback.*/
+    0,
+    0
+};
+
+uint32_t temp_send_size = 0;
+uint32_t send_buf_insert = 0;
+void handle_tunnel_call(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
+  if(recv_idx > recv_size) {
+    recv_idx = 0;
+    recv_timeout = 0;
+    recv_size = 0;
+    send_size = 0;
+    send_idx = 0;
+    palToggleLine(LED1_LINE);
+
+    // Setup
+    if(!esc_bb_setup) {
+      //pwmStop(&PWMD5);
+      pwmDisableChannel(&PWMD5, 0);
+      gptStart(&GPTD2, &gpt2cfg);
+      gptStartContinuous(&GPTD2, 13);
+
+      esc_bb_setup = true;
+    }
+
+    uavcan_tunnel_CallRequest req = {0};
+
+    uint8_t dyn_arr_buff[UAVCAN_TUNNEL_CALL_REQUEST_BUFFER_MAX_LENGTH+1];
+    uint8_t *dyn1 = dyn_arr_buff;
+    if(uavcan_tunnel_CallRequest_decode(transfer, transfer->payload_len, &req, &dyn1) < 0)
+      return;
+
+    palSetLineMode(ESC_LINE, PAL_MODE_OUTPUT_PUSHPULL);
+    SetIOHigh();
+
+    // Set values
+    memcpy(&send_buf[send_buf_insert], req.buffer.data, req.buffer.len);
+    temp_send_size += req.buffer.len;
+    send_buf_insert += req.buffer.len;
+    if(req.buffer.len != 60) {
+      send_size = temp_send_size;
+      send_buf_insert = 0;
+      temp_send_size = 0;
+
+        //Busy wait receive for response
+       while((recv_timeout < 50 && recv_size > 0) || (recv_timeout < 5000 && recv_size == 0)) {
+         chThdSleepMilliseconds(1);
+       }
+    }
+  }
+
+  // Send response
+  uint8_t buffer[UAVCAN_TUNNEL_CALL_RESPONSE_MAX_SIZE];
+  uavcan_tunnel_CallResponse resp = {0};
+  resp.buffer.data = &recv_buf[recv_idx];
+  resp.buffer.len = ((recv_size-recv_idx) > 60)? 60 : (recv_size-recv_idx);
+
+  uint16_t total_size = uavcan_tunnel_CallResponse_encode(&resp, buffer);
+  uavcanRequestOrRespond(iface,
+                          transfer->source_node_id,
+                          UAVCAN_TUNNEL_CALL_SIGNATURE,
+                          UAVCAN_TUNNEL_CALL_ID,
+                          &transfer->transfer_id,
+                          transfer->priority,
+                          CanardResponse,
+                          buffer,
+                          total_size);
+  recv_idx += 60;
 }
 
 static uint8_t update_crc8(uint8_t crc, uint8_t crc_seed){
