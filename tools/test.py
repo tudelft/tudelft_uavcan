@@ -23,7 +23,7 @@ node_info.hardware_version.unique_id = b'12345' # Setting first 5 bytes; rest wi
 # Fill other fields as necessary...
 
 node = uavcan.make_node('can0',
-                        node_id=123,          # Setting the node ID 123
+                        node_id=110,          # Setting the node ID 143
                         node_info=node_info)  # Setting node info
 
 

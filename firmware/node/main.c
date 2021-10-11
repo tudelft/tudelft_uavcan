@@ -29,23 +29,6 @@
 /*===========================================================================*/
 
 /*
- * Red LED blinker thread, times are in milliseconds.
- */
-static THD_WORKING_AREA(waThread1, 128);
-static THD_FUNCTION(Thread1, arg) {
-
-  (void)arg;
-  chRegSetThreadName("blinker");
-  while (true) {
-    systime_t time = 500;
-    //palClearLine(LED1_LINE);
-    chThdSleepMilliseconds(time);
-    //palSetLine(LED1_LINE);
-    chThdSleepMilliseconds(time);
-  }
-}
-
-/*
  * Application entry point.
  */
 int main(void) {
@@ -67,11 +50,6 @@ int main(void) {
   uavcanInit();
   esc_init();
   volz_servo_init();
-
-  /*
-   * Creates the blinker thread.
-   */
-  chThdCreateStatic(waThread1, sizeof(waThread1), NORMALPRIO, Thread1, NULL);
 
   /*
    * Normal main() thread activity, spawning shells.
