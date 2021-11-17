@@ -15,6 +15,9 @@ This repository contains the UAVCAN modules used by the TU Delft.
  
 # CAN-tunnel for BLHeli devices
  - reboot devices ?
- - ./tools/test.py
+ - install ```pip3 install git+https://github.com/UAVCAN/pyuavcan@master``` ??
+ - or ```pip3 install pyuavcan_v0``` ??
+ - ```./tools/test.py```
 
-
+# BLHeli configure
+ - BLHeliSuite32XL
