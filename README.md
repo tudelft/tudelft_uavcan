@@ -20,4 +20,4 @@ This repository contains the UAVCAN modules used by the TU Delft.
  - ```./tools/test.py```
 
 # BLHeli configure
- - BLHeliSuite32XL
+ - BLHeliSuite32XL: https://github.com/bitdump/BLHeli/tree/master/BLHeli_32%20ARM#readme

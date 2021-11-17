@@ -13,6 +13,10 @@ bootloader:
 
 node:
 	make -C node BOARD=$(BOARD)
+	
+protocol:
+	cd ./lib/canard/dsdl_compiler/ && python3 libcanard_dsdlc --outdir ../../generated ../../public_regulated_data_types/
+
 
 %.upload:
 	@echo "Using Black Magic Probe with SWD on BMP_PORT $(BMP_PORT)"
