@@ -98,7 +98,7 @@ int main(void) {
    * Normal main() thread activity, wait to boot normal app
    */
   while (true) {
-    chThdSleepMilliseconds(10000);
+    chThdSleepMilliseconds(5000);
     if(!firmware_update.in_progress && goto_app)
       jump_to_app();
   }

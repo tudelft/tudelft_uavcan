@@ -9,6 +9,10 @@ struct esc_telem_data_t {
     float current;
     uint16_t consumption;
     uint32_t erpm;
+    uint16_t pole_pairs;
+
+    // Errors
+    uint32_t timeout_cnt;
 };
 
 extern struct esc_telem_data_t esc_telem_data;

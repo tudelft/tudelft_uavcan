@@ -12,12 +12,14 @@ uint8_t esc_idx = 0;
 static uint16_t esc_failsafe = 1000;
 static uint8_t servo_idx = 1;
 static uint32_t node_timeout = 100;
+static uint32_t node_status_timeout = 4;
 static uint8_t servo_type = 0;
 static uint16_t pwm_cmd = 1000;
 static bool req_telem = false; 
 static bool esc_init_done = false;
 
 static virtual_timer_t esc_timeout_vt;
+static virtual_timer_t esc_status_timeout_vt;
 static virtual_timer_t esc_telem_vt;
 static void pwm_cb(PWMDriver *pwmp);
 static uint8_t get_crc8(uint8_t *Buf, uint8_t BufLen);
@@ -88,6 +90,11 @@ static void esc_timeout_cb(void *arg __attribute__((unused))) {
   pwmEnableChannelI(&PWMD5, 0, pwm_cmd);
 }
 
+static void esc_status_timeout_cb(void *arg __attribute__((unused))) {
+  // Debug information about missing commands
+  esc_telem_data.timeout_cnt++;
+}
+
 static void esc_telem_cb(void *arg __attribute__((unused))) {
   // Request for telemetry
   //req_telem = true;
@@ -134,11 +141,15 @@ static THD_FUNCTION(esc_telem_thd, arg) {
 void esc_init(void) {
   esc_idx = config_get_by_name("ESC index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
   esc_failsafe = config_get_by_name("ESC failsafe", 0)->val.i;
+  esc_telem_data.pole_pairs = config_get_by_name("ESC pole pairs", 0)->val.i;
   servo_idx = config_get_by_name("SERVO index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
   servo_type = config_get_by_name("SERVO type", 0)->val.i;
-  node_timeout = config_get_by_name("NODE timeout (ms)", 0)->val.i;
+  node_timeout = config_get_by_name("NODE failsafe timeout (ms)", 0)->val.i;
+  node_status_timeout = config_get_by_name("NODE status timeout (ms)", 0)->val.i;
+  
   pwm_cmd = esc_failsafe;
 
+  chVTObjectInit(&esc_status_timeout_vt);
   chVTObjectInit(&esc_timeout_vt);
   chVTObjectInit(&esc_telem_vt);
 
@@ -200,6 +211,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 
   // Enable timeout
   chVTSet(&esc_timeout_vt, TIME_MS2I(node_timeout), esc_timeout_cb, NULL);
+  chVTSet(&esc_status_timeout_vt, TIME_MS2I(node_status_timeout), esc_status_timeout_cb, NULL);
 }
 
 #define SetIOHigh() {palSetLine(ESC_LINE);}

@@ -7,11 +7,11 @@
 void broadcast_esc_status(struct uavcan_iface_t *iface) {
   // Set the values
   uavcan_equipment_esc_Status escStatus;
-  escStatus.error_count = esc_telem_data.consumption;
+  escStatus.error_count = esc_telem_data.timeout_cnt + (iface->transmit_err_flush_cnt << 16) + (iface->transmit_err_cnt << 24);
   escStatus.voltage = esc_telem_data.voltage;
   escStatus.current = esc_telem_data.current;
   escStatus.temperature = esc_telem_data.temp + 274.15f;
-  escStatus.rpm = esc_telem_data.erpm / 14; //FIXME
+  escStatus.rpm = esc_telem_data.erpm / esc_telem_data.pole_pairs;
   escStatus.esc_index = esc_idx;
 
   uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];

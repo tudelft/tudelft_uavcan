@@ -12,18 +12,17 @@ static THD_WORKING_AREA(can1_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
-  .can_cfg = {
-    CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-    CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/1000000 - 1)
-  },
+  .can_baudrate = 1000000,
+  .can_cfg = { 0 },
   .thread_rx_wa = can1_rx_wa,
   .thread_rx_wa_size = sizeof(can1_rx_wa),
   .thread_tx_wa = can1_tx_wa,
   .thread_tx_wa_size = sizeof(can1_tx_wa),
   .thread_uavcan_wa = can1_uavcan_wa,
   .thread_uavcan_wa_size = sizeof(can1_uavcan_wa),
-  .node_id = CANARD_BROADCAST_NODE_ID
+  .node_id = CANARD_BROADCAST_NODE_ID,
+  .transmit_err_cnt = 0,
+  .transmit_err_flush_cnt = 0
 };
 #endif
 
@@ -34,18 +33,17 @@ static THD_WORKING_AREA(can2_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
-  .can_cfg = {
-    CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP,
-    CAN_BTR_SJW(0) | CAN_BTR_TS2(1) |
-    CAN_BTR_TS1(14) | CAN_BTR_BRP((STM32_PCLK1/18)/1000000 - 1)
-  },
+  .can_baudrate = 1000000,
+  .can_cfg = { 0 },
   .thread_rx_wa = can2_rx_wa,
   .thread_rx_wa_size = sizeof(can2_rx_wa),
   .thread_tx_wa = can2_tx_wa,
   .thread_tx_wa_size = sizeof(can2_tx_wa),
   .thread_uavcan_wa = can2_uavcan_wa,
   .thread_uavcan_wa_size = sizeof(can2_uavcan_wa),
-  .node_id = CANARD_BROADCAST_NODE_ID
+  .node_id = CANARD_BROADCAST_NODE_ID,
+  .transmit_err_cnt = 0,
+  .transmit_err_flush_cnt = 0
 };
 #endif
 
@@ -107,6 +105,8 @@ static THD_FUNCTION(can_rx, p) {
     if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
       continue;
     chMtxLock(&iface->mutex);
+
+    // Wait untial a CAN message is received
     while (canReceive(iface->can_driver, CAN_ANY_MAILBOX, &rx_msg, TIME_IMMEDIATE) == MSG_OK) {
       palToggleLine(LED1_LINE);
       // Process message.
@@ -119,6 +119,7 @@ static THD_FUNCTION(can_rx, p) {
         rx_frame.id = rx_msg.SID;
       }
  
+      // Let canard handle the frame
       canardHandleRxFrame(&iface->canard, &rx_frame, timestamp);
     }
     chMtxUnlock(&iface->mutex);
@@ -141,11 +142,14 @@ static THD_FUNCTION(can_tx, p) {
 
   while (true) {
     eventmask_t evts = chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100));
+    // Successfull transmit
     if (evts == 0)
       continue;
 
+    // Transmit error
     if(evts & EVENT_MASK(1))
     {
+      iface->transmit_err_cnt++;
       chEvtGetAndClearFlags(&txe);
       continue;
     }
@@ -162,17 +166,17 @@ static THD_FUNCTION(can_tx, p) {
         err_cnt = 0;
         canardPopTxQueue(&iface->canard);
       } else {
-        // After 20 retries giveup
-        if(err_cnt >= 20) {
+        // After 5 retries giveup and clean full queue
+        if(err_cnt >= 5) {
           err_cnt = 0;
-          canardPopTxQueue(&iface->canard);
+          iface->transmit_err_flush_cnt++;
+          while (canardPeekTxQueue(&iface->canard)) { canardPopTxQueue(&iface->canard); }
           continue;
         }
 
         // Timeout - just exit and try again later
         chMtxUnlock(&iface->mutex);
-        err_cnt++;
-        chThdSleepMilliseconds(err_cnt * 5);
+        chThdSleepMilliseconds(++err_cnt);
         chMtxLock(&iface->mutex);
         continue;
       }
@@ -402,7 +406,126 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
   return false;
 }
 
+/**
+ * Try to compute the timing registers for the can interface and set the configuration
+ */
+static bool uavcanConfigureIface(struct uavcan_iface_t *iface)
+{
+  if (iface->can_baudrate < 1) {
+    return false;
+  }
+
+  // Hardware configurationn
+#if defined(STM32_CAN_USE_FDCAN1) || defined(STM32_CAN_USE_FDCAN2)
+  const uint32_t pclk = STM32_FDCANCLK;
+#else
+  const uint32_t pclk = STM32_PCLK1;
+#endif
+  static const int MaxBS1 = 16;
+  static const int MaxBS2 = 8;
+
+  /*
+    * Ref. "Automatic Baudrate Detection in CANopen Networks", U. Koppe, MicroControl GmbH & Co. KG
+    *      CAN in Automation, 2003
+    *
+    * According to the source, optimal quanta per bit are:
+    *   Bitrate        Optimal Maximum
+    *   1000 kbps      8       10
+    *   500  kbps      16      17
+    *   250  kbps      16      17
+    *   125  kbps      16      17
+    */
+  const int max_quanta_per_bit = (iface->can_baudrate >= 1000000) ? 10 : 17;
+  static const int MaxSamplePointLocation = 900;
+
+  /*
+    * Computing (prescaler * BS):
+    *   BITRATE = 1 / (PRESCALER * (1 / PCLK) * (1 + BS1 + BS2))       -- See the Reference Manual
+    *   BITRATE = PCLK / (PRESCALER * (1 + BS1 + BS2))                 -- Simplified
+    * let:
+    *   BS = 1 + BS1 + BS2                                             -- Number of time quanta per bit
+    *   PRESCALER_BS = PRESCALER * BS
+    * ==>
+    *   PRESCALER_BS = PCLK / BITRATE
+    */
+  const uint32_t prescaler_bs = pclk / iface->can_baudrate;
+
+// Searching for such prescaler value so that the number of quanta per bit is highest.
+  uint8_t bs1_bs2_sum = max_quanta_per_bit - 1;
+  while ((prescaler_bs % (1 + bs1_bs2_sum)) != 0) {
+    if (bs1_bs2_sum <= 2) {
+      return false;          // No solution
+    }
+    bs1_bs2_sum--;
+  }
+
+  const uint32_t prescaler = prescaler_bs / (1 + bs1_bs2_sum);
+  if ((prescaler < 1U) || (prescaler > 1024U)) {
+    return false;              // No solution
+  }
+
+  /*
+    * Now we have a constraint: (BS1 + BS2) == bs1_bs2_sum.
+    * We need to find the values so that the sample point is as close as possible to the optimal value.
+    *
+    *   Solve[(1 + bs1)/(1 + bs1 + bs2) == 7/8, bs2]  (* Where 7/8 is 0.875, the recommended sample point location *)
+    *   {{bs2 -> (1 + bs1)/7}}
+    *
+    * Hence:
+    *   bs2 = (1 + bs1) / 7
+    *   bs1 = (7 * bs1_bs2_sum - 1) / 8
+    *
+    * Sample point location can be computed as follows:
+    *   Sample point location = (1 + bs1) / (1 + bs1 + bs2)
+    *
+    * Since the optimal solution is so close to the maximum, we prepare two solutions, and then pick the best one:
+    *   - With rounding to nearest
+    *   - With rounding to zero
+    */
+// First attempt with rounding to nearest
+  uint8_t bs1 = ((7 * bs1_bs2_sum - 1) + 4) / 8;
+  uint8_t bs2 = bs1_bs2_sum - bs1;
+  uint16_t sample_point_permill = 1000 * (1 + bs1) / (1 + bs1 + bs2);
+
+// Second attempt with rounding to zero
+  if (sample_point_permill > MaxSamplePointLocation) {
+    bs1 = (7 * bs1_bs2_sum - 1) / 8;
+    bs2 = bs1_bs2_sum - bs1;
+    sample_point_permill = 1000 * (1 + bs1) / (1 + bs1 + bs2);
+  }
+
+  /*
+    * Final validation
+    * Helpful Python:
+    * def sample_point_from_btr(x):
+    *     assert 0b0011110010000000111111000000000 & x == 0
+    *     ts2,ts1,brp = (x>>20)&7, (x>>16)&15, x&511
+    *     return (1+ts1+1)/(1+ts1+1+ts2+1)
+    *
+    */
+  if ((iface->can_baudrate != (pclk / (prescaler * (1 + bs1 + bs2)))) || (bs1 < 1) || (bs1 > MaxBS1) || (bs2 < 1)
+      || (bs2 > MaxBS2)) {
+    return false;
+  }
+
+  // Configure the interface
+#if defined(STM32_CAN_USE_FDCAN1) || defined(STM32_CAN_USE_FDCAN2)
+  iface->can_cfg.NBTP = (0 << FDCAN_NBTP_NSJW_Pos) | ((bs1 - 1) << FDCAN_NBTP_NTSEG1_Pos) | ((
+                          bs2 - 1) << FDCAN_NBTP_NTSEG2_Pos) | ((prescaler - 1) << FDCAN_NBTP_NBRP_Pos);
+  iface->can_cfg.CCCR = FDCAN_CCCR_FDOE | FDCAN_CCCR_BRSE;
+#else
+  iface->can_cfg.mcr = CAN_MCR_ABOM | CAN_MCR_AWUM | CAN_MCR_TXFP;
+  iface->can_cfg.btr = CAN_BTR_SJW(0) | CAN_BTR_TS1(bs1 - 1) | CAN_BTR_TS2(bs2 - 1) | CAN_BTR_BRP(prescaler - 1);
+#endif
+  return true;
+}
+
 static void uavcanInitIface(struct uavcan_iface_t *iface) {
+  // First try to configure abort if failed
+  if (!uavcanConfigureIface(iface)) {
+    return;
+  }
+
   chMtxObjectInit(&iface->mutex);
   chEvtObjectInit(&iface->tx_request);
   canardInit(&iface->canard, iface->canard_memory_pool, sizeof(iface->canard_memory_pool),

@@ -1,7 +1,7 @@
 #BOARD ?= lisa_m2.0
 BOARD ?= supercan_v1.0
 BMP_PORT ?= $(shell ls /dev/bmp-gdb 2>/dev/null || echo /dev/ttyACM0)
-GDB ?= arm-none-eabi-gdb
+GDB ?= gdb-multiarch
 
 all: bootloader node
 
@@ -15,7 +15,7 @@ node:
 	make -C node BOARD=$(BOARD)
 	
 protocol:
-	cd ./lib/canard/dsdl_compiler/ && python3 libcanard_dsdlc --outdir ../../generated ../../public_regulated_data_types/
+	cd ./lib/canard/dsdl_compiler/ && python3 libcanard_dsdlc --outdir ../../dsdlc_generated ../../public_regulated_data_types/uavcan
 
 
 %.upload:

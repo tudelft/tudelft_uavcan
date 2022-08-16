@@ -23,6 +23,7 @@
 
 struct uavcan_iface_t {
   CANDriver *can_driver;
+  uint32_t can_baudrate;
   CANConfig can_cfg;
 
   event_source_t tx_request;
@@ -41,6 +42,10 @@ struct uavcan_iface_t {
   // Dynamic node id allocation
   uint32_t send_next_node_id_allocation_request_at_ms;
   uint8_t node_id_allocation_unique_id_offset;
+
+  // Errors
+  uint32_t transmit_err_cnt;
+  uint32_t transmit_err_flush_cnt;
 };
 
 void uavcanInit(void);
