@@ -104,7 +104,6 @@ static THD_FUNCTION(can_rx, p) {
   while (true) {
     if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
       continue;
-    chMtxLock(&iface->mutex);
 
     // Wait untial a CAN message is received
     while (canReceive(iface->can_driver, CAN_ANY_MAILBOX, &rx_msg, TIME_IMMEDIATE) == MSG_OK) {
@@ -120,9 +119,10 @@ static THD_FUNCTION(can_rx, p) {
       }
  
       // Let canard handle the frame
+      chMtxLock(&iface->mutex);
       canardHandleRxFrame(&iface->canard, &rx_frame, timestamp);
+      chMtxUnlock(&iface->mutex);
     }
-    chMtxUnlock(&iface->mutex);
   }
   chEvtUnregister(&iface->can_driver->rxfull_event, &el);
 }
@@ -136,9 +136,9 @@ static THD_FUNCTION(can_tx, p) {
   uint8_t err_cnt = 0;
 
   chRegSetThreadName("can_tx");
-  chEvtRegister(&iface->can_driver->txempty_event, &txc, EVENT_MASK(0));
-  chEvtRegister(&iface->can_driver->error_event, &txe, EVENT_MASK(1));
-  chEvtRegister(&iface->tx_request, &txr, EVENT_MASK(2));
+  chEvtRegister(&iface->can_driver->txempty_event, &txc, 0);
+  chEvtRegister(&iface->can_driver->error_event, &txe, 1);
+  chEvtRegister(&iface->tx_request, &txr, 2);
 
   while (true) {
     eventmask_t evts = chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100));
