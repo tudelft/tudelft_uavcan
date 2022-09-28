@@ -93,7 +93,7 @@
  * PA4  - 0 - Analog input                     (ADC4)
  * PA5  - 0 - Analog input                     (v1_sense)
  * PA6  - B - Push Pull output 50MHz.          (PWM2)
- * PA7  - 8 - Digital input.                   (NC)
+ * PA7  - B - Digital input.                   (PWM?)
  * PA8  - 8 - Digital input.                   (NC)
  * PA9  - 7 - Open Drain output 50MHz.         (LED)
  * PA10 - 4 - Digital input.                   (UART1_RX)
@@ -103,7 +103,7 @@
  * PA14 - 4 - Digital input                    (JTAG_TCK)
  * PA15 - 3 - Push Pull output 50MHz.          (RS485_DE)
  */
-#define VAL_GPIOACRL            0x8B00000B      /*  PA7...PA0 */
+#define VAL_GPIOACRL            0xBB00000B      /*  PA7...PA0 */
 #define VAL_GPIOACRH            0x34488478      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 

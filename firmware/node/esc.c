@@ -11,6 +11,7 @@ struct esc_telem_data_t esc_telem_data;
 uint8_t esc_idx = 0;
 static uint16_t esc_failsafe = 1000;
 static uint8_t servo_idx = 1;
+static uint8_t servo_idx2 = 1;
 static uint32_t node_timeout = 100;
 static uint32_t node_status_timeout = 4;
 static uint8_t servo_type = 0;
@@ -50,7 +51,7 @@ static PWMConfig pwmcfg_servo = {
   NULL,
   {
     {PWM_OUTPUT_ACTIVE_HIGH, NULL},
-    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_ACTIVE_HIGH, NULL},
     {PWM_OUTPUT_DISABLED, NULL},
     {PWM_OUTPUT_DISABLED, NULL}
   },
@@ -143,6 +144,7 @@ void esc_init(void) {
   esc_failsafe = config_get_by_name("ESC failsafe", 0)->val.i;
   esc_telem_data.pole_pairs = config_get_by_name("ESC pole pairs", 0)->val.i;
   servo_idx = config_get_by_name("SERVO index", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
+  servo_idx2 = config_get_by_name("SERVO index2", 0)->val.i % UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH;
   servo_type = config_get_by_name("SERVO type", 0)->val.i;
   node_timeout = config_get_by_name("NODE failsafe timeout (ms)", 0)->val.i;
   node_status_timeout = config_get_by_name("NODE status timeout (ms)", 0)->val.i;
@@ -160,6 +162,7 @@ void esc_init(void) {
   // Start the SERVO PWM driver
   pwmStart(&PWMD3, &pwmcfg_servo);
   pwmEnableChannel(&PWMD3, 0, 1500);
+  pwmEnableChannel(&PWMD3, 1, 1500);
 
   // Start the telemetry requests
   uartStart(&UARTD1, &uart_telem_cfg);
@@ -173,6 +176,7 @@ void esc_init(void) {
 void esc_disable(void) {
   pwmDisableChannel(&PWMD5, 0);
   pwmDisableChannel(&PWMD3, 0);
+  pwmDisableChannel(&PWMD3, 1);
 }
 
 /*
@@ -187,7 +191,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   int16_t commands[UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH];
   uint32_t offset = 0;
 
-  if(esc_idx >= cnt || servo_idx >= cnt)
+  if(esc_idx >= cnt || servo_idx >= cnt || servo_idx2 >= cnt)
     return;
 
   for(uint8_t i = 0; i < cnt; i++) {
@@ -206,6 +210,10 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   int16_t servo_cmd = 1500+(commands[servo_idx]*500/8191);
   if(servo_cmd < 0) servo_cmd = 0;
   pwmEnableChannel(&PWMD3, 0, servo_cmd);
+
+  int16_t servo_cmd2 = 1500+(commands[servo_idx2]*500/8191);
+  if(servo_cmd2 < 0) servo_cmd2 = 0;
+  pwmEnableChannel(&PWMD3, 1, servo_cmd2);
 
   //volz_servo_set(commands[servo_idx]);
 

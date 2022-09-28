@@ -15,6 +15,7 @@ struct config_item_t config_items[] = {
     {.name = "ESC pole pairs", .type = CONFIG_TYPE_INT, .val.i = 7, .def.i = 7, .min.i = 1, .max.i = 120},
     {.name = "SERVO type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
     {.name = "SERVO index", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 254},
+    {.name = "SERVO index2", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 254},
     {.name = "SERVO P-gain", .type = CONFIG_TYPE_INT, .val.i = 75, .def.i = 75, .min.i = 0, .max.i = 100},
     {.name = "SERVO D-gain", .type = CONFIG_TYPE_INT, .val.i = 40, .def.i = 40, .min.i = 0, .max.i = 100},
     {.name = "SERVO max-power", .type = CONFIG_TYPE_INT, .val.i = 80, .def.i = 80, .min.i = 0, .max.i = 100},
