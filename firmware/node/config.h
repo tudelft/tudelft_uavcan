@@ -21,7 +21,7 @@ union config_val_t {
   int64_t i;
   float f;
   uint8_t b;
-  char s[128];
+  char s[16];
 };
 
 struct config_item_t {

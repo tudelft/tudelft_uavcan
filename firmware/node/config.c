@@ -7,18 +7,45 @@
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
 
 struct config_item_t config_items[] = {
+/* Node configuration */
     {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = 0, .max.i = CANARD_MAX_NODE_ID},
-    {.name = "NODE failsafe timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
-    {.name = "NODE status timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 4, .def.i = 4, .min.i = 0, .max.i = 20000},
-    {.name = "ESC index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 254},
-    {.name = "ESC failsafe", .type = CONFIG_TYPE_INT, .val.i = 1000, .def.i = 1000, .min.i = 750, .max.i = 2400},
-    {.name = "ESC pole pairs", .type = CONFIG_TYPE_INT, .val.i = 7, .def.i = 7, .min.i = 1, .max.i = 120},
-    {.name = "SERVO type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
-    {.name = "SERVO index", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 254},
-    {.name = "SERVO P-gain", .type = CONFIG_TYPE_INT, .val.i = 75, .def.i = 75, .min.i = 0, .max.i = 100},
-    {.name = "SERVO D-gain", .type = CONFIG_TYPE_INT, .val.i = 40, .def.i = 40, .min.i = 0, .max.i = 100},
-    {.name = "SERVO max-power", .type = CONFIG_TYPE_INT, .val.i = 80, .def.i = 80, .min.i = 0, .max.i = 100},
-    {.name = "SERVO stall-power", .type = CONFIG_TYPE_INT, .val.i = 45, .def.i = 45, .min.i = 0, .max.i = 100},
+
+/* ESC telemetry configuration */
+    {.name = "ESC telem index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
+    {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 1000},
+    {.name = "ESC telem type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1},
+    {.name = "ESC telem port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
+
+/* Servos configuration */
+    {.name = "SERVO failsafe timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
+#ifdef SERVO1_LINE
+    {.name = "SERVO1 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO1 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1000, .def.i = 1000, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO2_LINE
+    {.name = "SERVO2 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO2 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO3_LINE
+    {.name = "SERVO3 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO3 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO4_LINE
+    {.name = "SERVO4 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO4 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO5_LINE
+    {.name = "SERVO5 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO5 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO6_LINE
+    {.name = "SERVO6 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO6 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO7_LINE
+    {.name = "SERVO7 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
 };
 static uint16_t config_crc = 0;
 const uint8_t config_items_cnt = sizeof(config_items) / sizeof(struct config_item_t);
@@ -174,6 +201,10 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
                     resp.value.union_tag = item->type;
                     resp.value.integer_value = item->val.i;
                     break;
+                case CONFIG_TYPE_FLOAT:
+                    item->val.f = req.value.real_value;
+                    resp.value.union_tag = item->type;
+                    resp.value.real_value = item->val.f;
                 default:
                     break;
             }

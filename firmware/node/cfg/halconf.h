@@ -44,7 +44,7 @@
  * @brief   Enables the ADC subsystem.
  */
 #if !defined(HAL_USE_ADC) || defined(__DOXYGEN__)
-#define HAL_USE_ADC                         FALSE
+#define HAL_USE_ADC                         TRUE
 #endif
 
 /**
@@ -79,7 +79,7 @@
  * @brief   Enables the GPT subsystem.
  */
 #if !defined(HAL_USE_GPT) || defined(__DOXYGEN__)
-#define HAL_USE_GPT                         TRUE
+#define HAL_USE_GPT                         FALSE
 #endif
 
 /**

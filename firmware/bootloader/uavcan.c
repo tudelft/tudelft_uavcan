@@ -107,7 +107,6 @@ static THD_FUNCTION(can_rx, p) {
 
     // Wait untial a CAN message is received
     while (canReceive(iface->can_driver, CAN_ANY_MAILBOX, &rx_msg, TIME_IMMEDIATE) == MSG_OK) {
-      palToggleLine(LED1_LINE);
       // Process message.
       const uint32_t timestamp = TIME_I2US(chVTGetSystemTimeX());
       memcpy(rx_frame.data, rx_msg.data8, 8);
@@ -262,7 +261,26 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    chThdSleepMilliseconds(400);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(50);
 
     if(firmware_update.in_progress && firmware_update.iface == iface)
       request_fw_file(iface);

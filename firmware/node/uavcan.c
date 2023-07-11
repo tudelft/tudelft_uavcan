@@ -4,7 +4,7 @@
 #include "uavcan.h"
 #include "config.h"
 #include "node.h"
-#include "esc.h"
+#include "servos.h"
 
 #if STM32_CAN_USE_CAN1
 static THD_WORKING_AREA(can1_rx_wa, 1024*4);
@@ -88,6 +88,32 @@ int uavcanBroadcast(struct uavcan_iface_t *iface,   ///< The interface to write 
   res = canardBroadcast(&iface->canard, data_type_signature, data_type_id, inout_transfer_id, priority, payload, payload_len);
   chMtxUnlock(&iface->mutex);
   chEvtBroadcast(&iface->tx_request);
+  return res;
+}
+
+/**
+ * Broadcast on all ifaces
+*/
+int uavcanBroadcastAll(uint64_t data_type_signature,   ///< See above
+                    uint16_t data_type_id,          ///< Refer to the specification
+                    uint8_t* inout_transfer_id,     ///< Pointer to a persistent variable containing the transfer ID
+                    uint8_t priority,               ///< Refer to definitions CANARD_TRANSFER_PRIORITY_*
+                    const void* payload,            ///< Transfer payload
+                    uint16_t payload_len)           ///< Length of the above, in bytes
+{
+  int res;
+#ifdef STM32_CAN_USE_CAN1
+  chMtxLock(&can1_iface.mutex);
+  res = canardBroadcast(&can1_iface.canard, data_type_signature, data_type_id, inout_transfer_id, priority, payload, payload_len);
+  chMtxUnlock(&can1_iface.mutex);
+  chEvtBroadcast(&can1_iface.tx_request);
+#endif
+#ifdef STM32_CAN_USE_CAN2
+  chMtxLock(&can2_iface.mutex);
+  res = canardBroadcast(&can2_iface.canard, data_type_signature, data_type_id, inout_transfer_id, priority, payload, payload_len);
+  chMtxUnlock(&can2_iface.mutex);
+  chEvtBroadcast(&can2_iface.tx_request);
+#endif
   return res;
 }
 
@@ -280,16 +306,14 @@ static THD_FUNCTION(uavcan_thrd, p) {
   }
 
   while(true) {
-    broadcast_esc_status(iface);
-    chThdSleepMilliseconds(100);
     broadcast_node_status(iface);
-    chThdSleepMilliseconds(250);
-    broadcast_esc_status(iface);
-    chThdSleepMilliseconds(150);
 
     chMtxLock(&iface->mutex);
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
+
+    palToggleLine(LED1_LINE);
+    chThdSleepMilliseconds(500);
   }
 }
 
@@ -375,19 +399,19 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
       handle_param_execute_opcode(iface, transfer);
       break;
     case UAVCAN_TUNNEL_CALL_ID:
-      handle_tunnel_call(iface, transfer);
+      //handle_tunnel_call(iface, transfer);
       break;
 
     case UAVCAN_PROTOCOL_GETNODEINFO_ID:
       handle_get_node_info(iface, transfer);
       break;
     case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
-      esc_disable();
+      servos_disable();
       *((uint32_t *)0x20004FF0) = 0xDEADBEEF;
       NVIC_SystemReset();
       break;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
-      esc_disable();
+      servos_disable();
       NVIC_SystemReset();
       break;
   }

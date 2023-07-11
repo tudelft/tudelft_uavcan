@@ -26,6 +26,8 @@
  */
 #define BOARD_LISA_M2
 #define BOARD_NAME              "Lisa M2.0"
+#define HARD_VER_MAJOR          2
+#define HARD_VER_MINOR          0
 
 /*
  * Board frequencies.

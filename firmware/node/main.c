@@ -21,8 +21,9 @@
 #include <hal.h>
 #include "config.h"
 #include "uavcan.h"
-#include "esc.h"
-#include "volz_servo.h"
+#include "adcs.h"
+#include "servos.h"
+#include "esc_telem.h"
 
 /*===========================================================================*/
 /* Generic code.                                                             */
@@ -48,8 +49,9 @@ int main(void) {
    */
   config_init();
   uavcanInit();
-  esc_init();
-  volz_servo_init();
+  adcs_init();
+  servos_init();
+  esc_telem_init();
 
   /*
    * Normal main() thread activity, spawning shells.

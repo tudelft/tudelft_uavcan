@@ -57,4 +57,7 @@ int uavcanRequestOrRespond(struct uavcan_iface_t *iface, uint8_t destination_nod
 int uavcanBroadcast(struct uavcan_iface_t *iface, uint64_t data_type_signature, uint16_t data_type_id,
     uint8_t* inout_transfer_id, uint8_t priority, const void* payload, uint16_t payload_len);
 
+int uavcanBroadcastAll(uint64_t data_type_signature, uint16_t data_type_id,
+    uint8_t* inout_transfer_id, uint8_t priority, const void* payload, uint16_t payload_len);
+
 #endif /* UAVCAN_H */

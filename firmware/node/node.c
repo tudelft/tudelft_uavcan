@@ -2,28 +2,7 @@
 #include <stdlib.h>
 
 #include "node.h"
-#include "esc.h"
-
-void broadcast_esc_status(struct uavcan_iface_t *iface) {
-  // Set the values
-  uavcan_equipment_esc_Status escStatus;
-  escStatus.error_count = esc_telem_data.timeout_cnt + (iface->transmit_err_flush_cnt << 16) + (iface->transmit_err_cnt << 24);
-  escStatus.voltage = esc_telem_data.voltage;
-  escStatus.current = esc_telem_data.current;
-  escStatus.temperature = esc_telem_data.temp + 274.15f;
-  escStatus.rpm = esc_telem_data.erpm / esc_telem_data.pole_pairs;
-  escStatus.esc_index = esc_idx;
-
-  uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
-  uint16_t total_size = uavcan_equipment_esc_Status_encode(&escStatus, buffer);
-
-  static uint8_t transfer_id;
-  uavcanBroadcast(iface,
-      UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE,
-      UAVCAN_EQUIPMENT_ESC_STATUS_ID, &transfer_id,
-      CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
-}
-
+#include "servos.h"
 
 static void makeNodeStatusMessage(
     uint8_t buffer[UAVCAN_PROTOCOL_NODESTATUS_MAX_SIZE])
@@ -72,13 +51,13 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     pkt.software_version.optional_field_flags = UAVCAN_PROTOCOL_SOFTWAREVERSION_OPTIONAL_FIELD_FLAG_VCS_COMMIT;
     pkt.software_version.vcs_commit = SOFT_HASH;
 
-    pkt.hardware_version.major = 1;
-    pkt.hardware_version.minor = 0;
+    pkt.hardware_version.major = HARD_VER_MAJOR;
+    pkt.hardware_version.minor = HARD_VER_MINOR;
     memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
-    char name[strlen("SUPERCAN") + 1];
-    strcpy(name, "SUPERCAN");
-    pkt.name.len = strlen("SUPERCAN");
+    char name[strlen(BOARD_NAME) + 1];
+    strcpy(name, BOARD_NAME);
+    pkt.name.len = strlen(BOARD_NAME);
     pkt.name.data = (uint8_t *)name;
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);

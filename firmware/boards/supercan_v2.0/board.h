@@ -17,6 +17,7 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+
 /*
  * Setup for the LeafLabs Maple Mini.
  */
@@ -24,9 +25,9 @@
 /*
  * Board identifier.
  */
-#define BOARD_SUPERCAN_V1
-#define BOARD_NAME              "Supercan V1.0"
-#define HARD_VER_MAJOR          1
+#define BOARD_SUPERCAN_V2
+#define BOARD_NAME              "Supercan V2.0"
+#define HARD_VER_MAJOR          2
 #define HARD_VER_MINOR          0
 
 /*
@@ -54,14 +55,27 @@
 /*
  * IO pins assignments
  */
-
-#define ESC_LINE          PAL_LINE(GPIOA, 0U)
-#define LED1_LINE         PAL_LINE(GPIOA, 9U)
+#define LED1_LINE         PAL_LINE(GPIOC, 6U)
 #define CAN1_STBY_LINE    PAL_LINE(GPIOB, 4U)
 #define CAN2_STBY_LINE    PAL_LINE(GPIOB, 7U)
-#define RS485_DE_LINE     PAL_LINE(GPIOA, 15U)
-#define RS485_RE_LINE     PAL_LINE(GPIOC, 0U)
 
+#define SERVO1_LINE       PAL_LINE(GPIOA, 3U)  // TIM5_CH4/TIM2_CH4
+#define SERVO2_LINE       PAL_LINE(GPIOA, 0U)  // TIM5_CH1
+#define SERVO3_LINE       PAL_LINE(GPIOA, 10U) // TIM1_CH3
+#define SERVO4_LINE       PAL_LINE(GPIOB, 11U) // TIM2_CH4 (REMAP)
+#define SERVO5_LINE       PAL_LINE(GPIOA, 2U)  // TIM5_CH3/TIM2_CH3
+#define SERVO6_LINE       PAL_LINE(GPIOA, 9U)  // TIM1_CH2
+#define SERVO7_LINE       PAL_LINE(GPIOB, 10U) // TIM2_CH3 (REMAP)
+
+#define SERIAL1_RX_LINE   PAL_LINE(GPIOA, 10U) // USART1_RX
+#define SERIAL1_TX_LINE   PAL_LINE(GPIOA, 9U)  // USART1_TX
+#define SERIAL2_RX_LINE   PAL_LINE(GPIOA, 3U)  // USART2_RX
+#define SERIAL2_TX_LINE   PAL_LINE(GPIOA, 2U)  // USART2_TX
+#define SERIAL3_RX_LINE   PAL_LINE(GPIOB, 11U) // USART3_RX
+#define SERIAL3_TX_LINE   PAL_LINE(GPIOB, 10U) // USART3_TX
+
+#define ADC1_LINE         PAL_LINE(GPIOB, 1U)  // ADC12_IN9
+#define ADC2_LINE         PAL_LINE(GPIOB, 0U)  // ADC12_IN8
 /*
  * I/O ports initial setup, this configuration is established soon after reset
  * in the initialization code.
@@ -88,7 +102,7 @@
 
 /*
  * Port A setup.
- * PA0  - B - Push Pull output 50MHz.          (PWM1)
+ * PA0  - B - Push Pull output 50MHz.          (PWM1,NTC1)
  * PA1  - 0 - Analog input                     (ADC1)
  * PA2  - 0 - Analog input                     (ADC2)
  * PA3  - 0 - Analog input                     (ADC3)
@@ -97,7 +111,7 @@
  * PA6  - B - Push Pull output 50MHz.          (PWM2)
  * PA7  - 8 - Digital input.                   (NC)
  * PA8  - 8 - Digital input.                   (NC)
- * PA9  - 7 - Open Drain output 50MHz.         (LED)
+ * PA9  - 7 - Digital input                    (NC)
  * PA10 - 4 - Digital input.                   (UART1_RX)
  * PA11 - 8 - Digital input                    (NC)
  * PA12 - 8 - Digital input                    (NC)
@@ -106,7 +120,7 @@
  * PA15 - 3 - Push Pull output 50MHz.          (RS485_DE)
  */
 #define VAL_GPIOACRL            0x8B00000B      /*  PA7...PA0 */
-#define VAL_GPIOACRH            0x34488478      /* PA15...PA8 */
+#define VAL_GPIOACRH            0x34488488      /* PA15...PA8 */
 #define VAL_GPIOAODR            0xFFFFFFFF
 
 /*
@@ -140,7 +154,7 @@
  * PC3  - 8 - Analog input                     (NC)
  * PC4  - 8 - Analog input                     (NC)
  * PC5  - 7 - Open Drain output 50MHz          (v2_drive)
- * PC6  - 8 - Alternate Push Pull output 50MHz (NC)
+ * PC6  - 7 - Open Drain output 50MHz.         (LED)
  * PC7  - 8 - Alternate Push Pull output 50MHz (NC)
  * PC8  - 8 - Alternate Push Pull output 50MHz (NC)
  * PC9  - 8 - Alternate Push Pull output 50MHz (NC)
@@ -151,7 +165,7 @@
  * PC14 - 8 - Digital input                    (NC)
  * PC15 - 8 - Open Drain output 50MHz          (NC)
  */
-#define VAL_GPIOCCRL            0x88788888      /*  PC7...PC0 */
+#define VAL_GPIOCCRL            0x87788888      /*  PC7...PC0 */
 #define VAL_GPIOCCRH            0x88884B88      /* PC15...PC8 */
 #define VAL_GPIOCODR            0xFFFFFFFF
 
@@ -191,6 +205,11 @@
 extern "C" {
 #endif
   void boardInit(void);
+
+  void board_init_servos(bool servo1, bool servo2, bool servo3, bool servo4, bool servo5, bool servo6, bool servo7);
+  void board_disable_servos(void);
+  void board_set_servos(uint16_t servo1, uint16_t servo2, uint16_t servo3, uint16_t servo4, uint16_t servo5, uint16_t servo6, uint16_t servo7);
+
 #ifdef __cplusplus
 }
 #endif
