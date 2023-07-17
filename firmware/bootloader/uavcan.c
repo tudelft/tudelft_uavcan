@@ -261,26 +261,7 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
-    palToggleLine(LED1_LINE);
-    chThdSleepMilliseconds(50);
+    chThdSleepMilliseconds(500);
 
     if(firmware_update.in_progress && firmware_update.iface == iface)
       request_fw_file(iface);

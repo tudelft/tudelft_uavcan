@@ -46,7 +46,7 @@ static struct servos_t servos = {
 
 static void servos_timeout_cb(void *arg __attribute__((unused))) {
   // When no commands are received timeout and set everything to failsafe
-  board_set_servos(
+  board_set_servos(false,
 #ifdef SERVO1_LINE
     servos.servo1_failsafe,
 #endif
@@ -74,6 +74,7 @@ static void servos_timeout_cb(void *arg __attribute__((unused))) {
 void servos_init(void) {
   servos.node_timeout = config_get_by_name("SERVO failsafe timeout (ms)", 0)->val.i;
 
+  // Read the servo settings
 #ifdef SERVO1_LINE
   servos.servo1_idx = config_get_by_name("SERVO1 index", 0)->val.i;
   servos.servo1_failsafe = config_get_by_name("SERVO1 failsafe", 0)->val.i;
@@ -103,8 +104,7 @@ void servos_init(void) {
   servos.servo7_failsafe = config_get_by_name("SERVO7 failsafe", 0)->val.i;
 #endif
 
-  chVTObjectInit(&servos.timeout_vt);
-
+  // Initialize the servos which are used
   board_init_servos(
 #ifdef SERVO1_LINE
     (servos.servo1_idx != 255),
@@ -129,7 +129,8 @@ void servos_init(void) {
 #endif
   );
 
-  board_set_servos(
+  // Set all servos to the initial failsafe value
+  board_set_servos(true,
 #ifdef SERVO1_LINE
     servos.servo1_failsafe,
 #endif
@@ -153,10 +154,13 @@ void servos_init(void) {
 #endif
   );
 
+  // Initialize the servo timeout timer
+  chVTObjectInit(&servos.timeout_vt);
   servos.initialized = true;
 }
 
 void servos_disable(void) {
+  servos.initialized = false;
   board_disable_servos();
 }
 
@@ -168,18 +172,17 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   if(!servos.initialized)
     return;
   
+  // Decode the commands
   uint8_t cnt = (transfer->payload_len * 8) / 14;
   int16_t commands[UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_CMD_MAX_LENGTH];
   uint32_t offset = 0;
-
-  // if(esc_idx >= cnt || servo_idx >= cnt)
-  //   return;
 
   for(uint8_t i = 0; i < cnt; i++) {
     canardDecodeScalar(transfer, offset, 14, true, (void*)&commands[i]);
     offset += 14;
   }
 
+  // Set the target commands for the servo
 #ifdef SERVO1_LINE
   int16_t servo1_cmd;
   if(servos.servo1_idx < cnt) {
@@ -244,7 +247,8 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   }
 #endif
 
-  board_set_servos(
+  // Commit the commands
+  board_set_servos(true,
 #ifdef SERVO1_LINE
     servo1_cmd,
 #endif

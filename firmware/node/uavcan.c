@@ -312,7 +312,6 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    palToggleLine(LED1_LINE);
     chThdSleepMilliseconds(500);
   }
 }

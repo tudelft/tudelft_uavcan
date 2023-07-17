@@ -152,9 +152,9 @@ static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
     
 
     // Dummy variables to apply the bitshifting later (for scaling according to protocol)
-    uint16_t rx_throttle_dummy = (msg[6] <<8 | msg[7]);
-    uint16_t output_throttle_dummy = (msg[8] <<8 | msg[9]);
-    uint16_t rpm_dummy = (msg[10] <<8 | msg[11]);
+    // uint16_t rx_throttle_dummy = (msg[6] <<8 | msg[7]);
+    // uint16_t output_throttle_dummy = (msg[8] <<8 | msg[9]);
+    // uint16_t rpm_dummy = (msg[10] <<8 | msg[11]);
 
     // Read the alpha esc information
     // alpha_esc_data.bale_no = (uint16_t)((msg[4] <<8 | msg[5]));

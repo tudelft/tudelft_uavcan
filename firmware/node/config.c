@@ -168,6 +168,11 @@ static void config_set_resp(struct config_item_t *item, uavcan_protocol_param_Ge
     }
 }
 
+/* Disable enum comparison and conversion */
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wenum-compare"
+#pragma GCC diagnostic ignored "-Wenum-conversion"
+
 /*
   handle a PARAM_GETSET request
  */
@@ -232,6 +237,8 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
                            buffer,
                            total_size);
 }
+
+#pragma GCC diagnostic pop
 
 void handle_param_execute_opcode(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
     uint8_t buffer[UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_RESPONSE_MAX_SIZE];

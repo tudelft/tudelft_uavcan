@@ -170,7 +170,13 @@ void board_disable_servos(void) {
   }
 }
 
-void board_set_servos(uint16_t servo1, uint16_t servo2, uint16_t servo3, uint16_t servo4, uint16_t servo5, uint16_t servo6, uint16_t servo7) {
+
+
+void board_set_servos(bool lock, uint16_t servo1, uint16_t servo2, uint16_t servo3, uint16_t servo4, uint16_t servo5, uint16_t servo6, uint16_t servo7) {
+  if(lock) {
+    osalSysLock();
+  }
+
   if(servo_enabled[0] && servo1 != 0) {
     pwmEnableChannelI(&PWMD5, 3, servo1);
   }
@@ -191,6 +197,10 @@ void board_set_servos(uint16_t servo1, uint16_t servo2, uint16_t servo3, uint16_
   }
   if(servo_enabled[6] && servo7 != 0) {
     pwmEnableChannelI(&PWMD2, 2, servo7);
+  }
+
+  if(lock) {
+    osalSysUnlock();
   }
 }
 #endif

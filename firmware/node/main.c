@@ -57,12 +57,7 @@ int main(void) {
    * Normal main() thread activity, spawning shells.
    */
   while (true) {
-    // if (SDU1.config->usbp->state == USB_ACTIVE) {
-    //   thread_t *shelltp = chThdCreateFromHeap(NULL, SHELL_WA_SIZE,
-    //                                           "shell", NORMALPRIO + 1,
-    //                                           shellThread, (void *)&shell_cfg1);
-    //   chThdWait(shelltp);               /* Waiting termination.             */
-    // }
-    chThdSleepMilliseconds(1000);
+    chThdSleepMilliseconds(500);
+    palToggleLine(LED1_LINE);
   }
 }

@@ -20,6 +20,7 @@
 #include "firmware_update.h"
 
 #define APP_START_ADDRESS     0x08008000
+#define START_TIMEOUT_MS      5000
 
 static void
 do_jump(uint32_t stacktop, uint32_t entrypoint)
@@ -97,9 +98,18 @@ int main(void) {
   /*
    * Normal main() thread activity, wait to boot normal app
    */
+  systime_t start = chVTGetSystemTime();
+  systime_t end = chTimeAddX(start, TIME_MS2I(START_TIMEOUT_MS));
   while (true) {
-    chThdSleepMilliseconds(5000);
-    if(!firmware_update.in_progress && goto_app)
+    palToggleLine(LED1_LINE);
+
+    if(!firmware_update.in_progress)
+      chThdSleepMilliseconds(75);
+    else
+      chThdSleepMilliseconds(30);
+
+    // Eventually go to the application
+    if(!chVTIsSystemTimeWithin(start, end) && !firmware_update.in_progress && goto_app)
       jump_to_app();
   }
 }

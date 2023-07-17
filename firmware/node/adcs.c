@@ -35,7 +35,7 @@ void adc1callback(ADCDriver *adcp)
     // if adcIsBufferComplete return true, the last filled
     // half buffer start in the middle of buffer, else, is start at
     // beginiing of buffer
-    const adcsample_t *buffer = adc_samples; //+ (adcIsBufferComplete(adcp) ? n *ADC_NUM_CHANNELS : 0U);
+    const adcsample_t *buffer = adc_samples + (adcIsBufferComplete(adcp) ? n *ADC_NUM_CHANNELS : 0U);
 
     for (int channel = 0; channel < ADC_NUM_CHANNELS; channel++) {
       //if (adc1_buffers[channel] != NULL) {
@@ -149,6 +149,4 @@ void adcs_init(void) {
   // Start ADC in continious conversion mode
   adcStart(&ADCD1, NULL);
   adcStartConversion(&ADCD1, &adc1_group, adc_samples, ADC_BUF_DEPTH);
-
-  adc1_buffers[0].sum = 99;
 }
