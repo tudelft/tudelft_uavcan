@@ -30,10 +30,10 @@ static void esc_telem_broadcast_status(void) {
   // Set the values
   uavcan_equipment_esc_Status escStatus;
   escStatus.error_count = esc_telem.data.timeout_cnt;
-  escStatus.voltage = ((float)adc1_buffers[0].sum / (float)adc1_buffers[0].av_nb_sample) / 4095.f * 3.3f * 23;//esc_telem.data.voltage;
-  escStatus.current = ((float)adc1_buffers[1].sum / (float)adc1_buffers[1].av_nb_sample) / 4095.f * 3.3f * 23;//esc_telem.data.current;
+  escStatus.voltage = esc_telem.data.voltage; // ((float)adc1_buffers[0].sum / (float)adc1_buffers[0].av_nb_sample) / 4095.f * 3.3f * 23;
+  escStatus.current = esc_telem.data.current; // ((float)adc1_buffers[1].sum / (float)adc1_buffers[1].av_nb_sample) / 4095.f * 3.3f * 23;
   escStatus.temperature = esc_telem.data.temp + 274.15f;
-  escStatus.rpm = esc_telem.data.erpm / esc_telem.data.pole_pairs;
+  escStatus.rpm = esc_telem.data.erpm / 1;
   escStatus.esc_index = esc_telem.index;
 
   uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
@@ -46,7 +46,7 @@ static void esc_telem_broadcast_status(void) {
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
 }
 
-static THD_WORKING_AREA(esc_telem_send_wa, 128);
+static THD_WORKING_AREA(esc_telem_send_wa, 512);
 static THD_FUNCTION(esc_telem_send_thd, arg) {
   (void)arg;
   chRegSetThreadName("esc_telem");
@@ -79,10 +79,13 @@ void esc_telem_init(void) {
 
     // Configure the port
     if(port == 1) {
+        palSetLineMode(SERIAL1_RX_LINE, PAL_MODE_INPUT);
         esc_telem.port = &UARTD1;
     } else if(port == 2) {
+        palSetLineMode(SERIAL2_RX_LINE, PAL_MODE_INPUT);
         esc_telem.port = &UARTD2;
     } else if(port == 3) {
+        palSetLineMode(SERIAL3_RX_LINE, PAL_MODE_INPUT);
         esc_telem.port = &UARTD3;
     } else{
         esc_telem.port = NULL;
@@ -113,8 +116,6 @@ static uint8_t get_crc8(uint8_t *Buf, uint8_t BufLen) {
 static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len) { 
     // Verify the CRC and size
     if(len == 10 && get_crc8(msg, 9) == msg[9]) {
-        //palToggleLine(LED1_LINE);
-
         uint16_t volt_u = (msg[1] << 8) | msg[2];
         uint16_t curr_u = (msg[3] << 8) | msg[4];
         uint16_t erpm_u = (msg[7] << 8) | msg[8];
@@ -139,7 +140,7 @@ static const uint8_t tempTable[ 220 ] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,1
 static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
 {
     // Verify the start
-    if(len < 24 || msg[0] != 0x9B || msg[1] != 0x16 || msg[2] != 0x01 || msg[3] != 0x02)
+    if(len < 24 || msg[0] != 0x9B || msg[1] != 0x16 || msg[2] != 0x04 || msg[3] != 0x02)
         return;
 
     // Very the checksum
@@ -149,20 +150,21 @@ static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
     uint8_t recv_checksum = (uint16_t)((msg[22]) | (msg[23]<<8));
     if(checksum != recv_checksum)
         return;
-    
 
     // Dummy variables to apply the bitshifting later (for scaling according to protocol)
     // uint16_t rx_throttle_dummy = (msg[6] <<8 | msg[7]);
     // uint16_t output_throttle_dummy = (msg[8] <<8 | msg[9]);
-    // uint16_t rpm_dummy = (msg[10] <<8 | msg[11]);
+    uint16_t rpm_dummy = (msg[10] <<8 | msg[11]);
 
     // Read the alpha esc information
     // alpha_esc_data.bale_no = (uint16_t)((msg[4] <<8 | msg[5]));
     // alpha_esc_data.rx_throttle = (uint16_t)((rx_throttle_dummy)*100/1024); // Original (uint16_t)((msg[6] <<8 | msg[7])*100/1024);
     // alpha_esc_data.output_throttle = (uint16_t)((output_throttle_dummy)*100/1024); // Original (uint16_t)((msg[8] <<8 | msg[9])*100/1024);
-    // alpha_esc_data.rpm = (uint16_t)(rpm_dummy * 10.f / 21); // (uint16_t)((msg[10] <<8 | msg[11])*10/108);
-    esc_telem.data.voltage = ((uint16_t)((msg[12] <<8 | msg[13]))) / 10.f; // Needs to be divided by 10 to get real voltage
-    esc_telem.data.current = ((int16_t)((msg[14] <<8 | msg[15]))) / 64.f;// Needs to be divided by 64
+    esc_telem.data.erpm = (uint16_t)(rpm_dummy); // (uint16_t)((msg[10] <<8 | msg[11])*10/108);
+    esc_telem.data.voltage = ((uint16_t)((msg[12] <<8 | msg[13]))) / 59.f; // Needs to be divided by 10 to get real voltage
+    esc_telem.data.current = ((int16_t)((msg[14] <<8 | msg[15]))) / 7.f;// Needs to be divided by 64
+    if(esc_telem.data.current > 0)
+        esc_telem.data.current -= 48;
     // alpha_esc_data.phase_wire_current = ((int16_t)((msg[16] <<8 | msg[17]))); //Needs to be divided by 64
     esc_telem.data.temp = tempTable[msg[18]];
     // alpha_esc_data.capacitor_temp = tempTable[msg[19]];

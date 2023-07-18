@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #define MAX_AV_NB_SAMPLE 0x20
-#define ADC_NUM_CHANNELS 2
 
 struct adc_buf {
   uint32_t sum;                      /* Sum of samples in buffer (avg = sum / av_nb_sample) */
@@ -13,7 +12,7 @@ struct adc_buf {
   uint8_t  av_nb_sample;             /* Number of samples to use in buffer (used for avg)   */
 };
 
-extern struct adc_buf adc1_buffers[ADC_NUM_CHANNELS];
+extern struct adc_buf adc1_buffers[];
 
 void adcs_init(void);
 

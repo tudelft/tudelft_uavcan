@@ -15,6 +15,7 @@
 #include <uavcan/protocol/file/Read.h>
 #include <uavcan/equipment/esc/RawCommand.h>
 #include <uavcan/equipment/esc/Status.h>
+#include <uavcan/equipment/device/Temperature.h>
 #include <uavcan/protocol/param/GetSet.h>
 #include <uavcan/protocol/param/ExecuteOpcode.h>
 #include <uavcan/protocol/param/ExecuteOpcode.h>

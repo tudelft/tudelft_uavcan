@@ -17,6 +17,7 @@
 #ifndef _BOARD_H_
 #define _BOARD_H_
 
+#include <stdbool.h>
 
 /*
  * Setup for the LeafLabs Maple Mini.
@@ -74,8 +75,20 @@
 #define SERIAL3_RX_LINE   PAL_LINE(GPIOB, 11U) // USART3_RX
 #define SERIAL3_TX_LINE   PAL_LINE(GPIOB, 10U) // USART3_TX
 
-#define ADC1_LINE         PAL_LINE(GPIOB, 1U)  // ADC12_IN9
-#define ADC2_LINE         PAL_LINE(GPIOB, 0U)  // ADC12_IN8
+#define ADC_POWER1_LINE     PAL_LINE(GPIOB, 1U)  // ADC12_IN9
+#define ADC_POWER1_CHANNEL  ADC_CHANNEL_IN9
+#define ADC_POWER1_MUL      23.0f
+#define ADC_POWER2_LINE     PAL_LINE(GPIOB, 0U)  // ADC12_IN8
+#define ADC_POWER2_CHANNEL  ADC_CHANNEL_IN8
+#define ADC_POWER2_MUL      23.0f
+
+#define ADC_NTC1_LINE       PAL_LINE(GPIOA, 0U)  // ADC12_IN0
+#define ADC_NTC1_CHANNEL    ADC_CHANNEL_IN0
+#define ADC_NTC2_LINE       PAL_LINE(GPIOA, 1U)  // ADC12_IN1
+#define ADC_NTC2_CHANNEL    ADC_CHANNEL_IN1
+
+#define ADC_MAX_CHANNELS  4
+
 /*
  * I/O ports initial setup, this configuration is established soon after reset
  * in the initialization code.

@@ -10,12 +10,6 @@ struct config_item_t config_items[] = {
 /* Node configuration */
     {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = 0, .max.i = CANARD_MAX_NODE_ID},
 
-/* ESC telemetry configuration */
-    {.name = "ESC telem index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
-    {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 1000},
-    {.name = "ESC telem type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1},
-    {.name = "ESC telem port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
-
 /* Servos configuration */
     {.name = "SERVO failsafe timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
 #ifdef SERVO1_LINE
@@ -45,6 +39,43 @@ struct config_item_t config_items[] = {
 #ifdef SERVO7_LINE
     {.name = "SERVO7 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
     {.name = "SERVO7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+
+/* ESC telemetry configuration */
+    {.name = "ESC telem index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
+    {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 1000},
+    {.name = "ESC telem type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1},
+    {.name = "ESC telem port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
+    {.name = "ESC telem pole pairs", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 1, .max.i = 1000},
+
+/* POWER ADC's configuration */
+#ifdef ADC_POWER1_MUL
+    {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 1000},
+    {.name = "POWER1 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
+    {.name = "POWER1 multiply", .type = CONFIG_TYPE_FLOAT, .val.i = ADC_POWER1_MUL, .def.i = ADC_POWER1_MUL, .min.i = 0, .max.i = 1000000},
+#endif
+#ifdef ADC_POWER2_MUL
+    {.name = "POWER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 1000},
+    {.name = "POWER2 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
+    {.name = "POWER2 multiply", .type = CONFIG_TYPE_FLOAT, .val.i = ADC_POWER2_MUL, .def.i = ADC_POWER2_MUL, .min.i = 0, .max.i = 1000000},
+#endif
+
+/* NTC ADC's configuration */
+#ifdef ADC_NTC1_LINE
+    {.name = "NTC1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "NTC1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "NTC1 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC1 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC1 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC1 SH eq c", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
+#endif
+#ifdef ADC_NTC2_LINE
+    {.name = "NTC2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "NTC2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "NTC2 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC2 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC2 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
+    {.name = "NTC2 SH eq c", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
 #endif
 };
 static uint16_t config_crc = 0;
