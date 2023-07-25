@@ -247,6 +247,12 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   }
 #endif
 
+#include "faulhaber_ctrl.h"
+  if(faulhaber_ctrl.port != NULL && faulhaber_ctrl.index < cnt) {
+    int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos) / 2;
+    faulhaber_ctrl.target_position = (uint64_t)faulhaber_ctrl.min_pos + range + (commands[faulhaber_ctrl.index]*range / 8191);
+  }
+
   // Commit the commands
   board_set_servos(true,
 #ifdef SERVO1_LINE

@@ -164,7 +164,7 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/tunnel/tunnel_Protocol.c \
        $(DSDLC_DIR)/uavcan/equipment/esc/esc_Status.c \
        $(DSDLC_DIR)/uavcan/equipment/device/device_Temperature.c \
-	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
+	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c faulhaber_ctrl.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

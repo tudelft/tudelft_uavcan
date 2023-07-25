@@ -7,7 +7,7 @@ struct esc_telem_t esc_telem;
 static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len);
 static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len);
 
-static THD_WORKING_AREA(esc_telem_wa, 128);
+static THD_WORKING_AREA(esc_telem_wa, 512);
 static THD_FUNCTION(esc_telem_thd, arg) {
   (void)arg;
   chRegSetThreadName("esc_telem");
@@ -25,15 +25,14 @@ static THD_FUNCTION(esc_telem_thd, arg) {
   }
 }
 
-#include "adcs.h"
 static void esc_telem_broadcast_status(void) {
   // Set the values
   uavcan_equipment_esc_Status escStatus;
   escStatus.error_count = esc_telem.data.timeout_cnt;
-  escStatus.voltage = esc_telem.data.voltage; // ((float)adc1_buffers[0].sum / (float)adc1_buffers[0].av_nb_sample) / 4095.f * 3.3f * 23;
-  escStatus.current = esc_telem.data.current; // ((float)adc1_buffers[1].sum / (float)adc1_buffers[1].av_nb_sample) / 4095.f * 3.3f * 23;
+  escStatus.voltage = esc_telem.data.voltage;
+  escStatus.current = esc_telem.data.current;
   escStatus.temperature = esc_telem.data.temp + 274.15f;
-  escStatus.rpm = esc_telem.data.erpm / 1;
+  escStatus.rpm = esc_telem.data.erpm / esc_telem.pole_pairs;
   escStatus.esc_index = esc_telem.index;
 
   uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
@@ -62,6 +61,7 @@ void esc_telem_init(void) {
     esc_telem.index = config_get_by_name("ESC telem index", 0)->val.i;
     esc_telem.vt_delay = 1000.f / config_get_by_name("ESC telem frequency", 0)->val.f;
     esc_telem.type = config_get_by_name("ESC telem type", 0)->val.i;
+    esc_telem.pole_pairs = config_get_by_name("ESC telem pole pairs", 0)->val.i;
     uint8_t port = config_get_by_name("ESC telem port", 0)->val.i;
 
     // Change port settings based on type
@@ -160,7 +160,7 @@ static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
     // alpha_esc_data.bale_no = (uint16_t)((msg[4] <<8 | msg[5]));
     // alpha_esc_data.rx_throttle = (uint16_t)((rx_throttle_dummy)*100/1024); // Original (uint16_t)((msg[6] <<8 | msg[7])*100/1024);
     // alpha_esc_data.output_throttle = (uint16_t)((output_throttle_dummy)*100/1024); // Original (uint16_t)((msg[8] <<8 | msg[9])*100/1024);
-    esc_telem.data.erpm = (uint16_t)(rpm_dummy); // (uint16_t)((msg[10] <<8 | msg[11])*10/108);
+    esc_telem.data.erpm = (uint16_t)(rpm_dummy) * 500; // (uint16_t)((msg[10] <<8 | msg[11])*10/108);
     esc_telem.data.voltage = ((uint16_t)((msg[12] <<8 | msg[13]))) / 59.f; // Needs to be divided by 10 to get real voltage
     esc_telem.data.current = ((int16_t)((msg[14] <<8 | msg[15]))) / 7.f;// Needs to be divided by 64
     if(esc_telem.data.current > 0)

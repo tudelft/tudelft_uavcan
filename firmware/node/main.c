@@ -23,6 +23,7 @@
 #include "uavcan.h"
 #include "adcs.h"
 #include "servos.h"
+#include "faulhaber_ctrl.h"
 #include "esc_telem.h"
 
 /*===========================================================================*/
@@ -51,6 +52,7 @@ int main(void) {
   uavcanInit();
   adcs_init();
   servos_init();
+  faulhaber_ctrl_init();
   esc_telem_init();
 
   /*

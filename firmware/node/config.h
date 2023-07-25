@@ -21,11 +21,11 @@ union config_val_t {
   int64_t i;
   float f;
   uint8_t b;
-  char s[16];
+  char s[8];
 };
 
 struct config_item_t {
-  char name[92];
+  char name[64];
   enum config_type_t type;
 
   union config_val_t val;
