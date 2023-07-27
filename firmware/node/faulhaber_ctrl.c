@@ -52,9 +52,21 @@ static THD_FUNCTION(faulhaber_ctrl_rx_thd, arg) {
                 faulhaber_ctrl.actual_position = faulhaber_p.data[3] | (faulhaber_p.data[4] << 8) | (faulhaber_p.data[5] << 16) | (faulhaber_p.data[6] << 24);
               }
 
-              // Parse the status message for homing
-              if(!faulhaber_ctrl.homing_completed && faulhaber_p.cmd_code == 0x05 && faulhaber_p.data[1]&0x10) {
-                faulhaber_ctrl.homing_completed = true;
+              // Parse the statuscode message
+              if(faulhaber_p.cmd_code == 0x05) {
+                uint16_t status_code = faulhaber_p.data[0] | (faulhaber_p.data[1] << 8);
+
+                // Homing
+                if(!faulhaber_ctrl.homing_completed && status_code&0x1000 && status_code&0x400)
+                  faulhaber_ctrl.homing_completed = true;
+                
+                // Position accepted
+                if(!faulhaber_ctrl.position_ready && status_code&0x1000)
+                  faulhaber_ctrl.position_ready = true;
+                  
+                // Target reached
+                if(!faulhaber_ctrl.target_reached && status_code&0x400)
+                  faulhaber_ctrl.target_reached = true;
               }
 
               // Start receiving new messages
@@ -90,96 +102,101 @@ static THD_FUNCTION(faulhaber_ctrl_tx_thd, arg) {
   static uint8_t data4[] = { 0x40, 0x60, 0x00, 0x1F, 0x00}; // Set 0x6040.00 to 0x001F: Start moving
   faulhaber_send_command(0x02, data4, 5);
 
-  // Wait till homing is finished (TODO)
-  //while(!faulhaber_ctrl.homing_completed)
-  //  chThdSleepMilliseconds(50);
-  chThdSleepSeconds(20);
+  // Wait till homing is finished
+  systime_t start = chVTGetSystemTimeX();
+  while(!faulhaber_ctrl.homing_completed) {
+    chThdSleepMilliseconds(50);
+
+    // Timeout after 25 seconds
+    if(chVTTimeElapsedSinceX(start) > TIME_S2I(25)) {
+      // TODO
+      break;
+    }
+  }
 
   // Disable the drives
   /*static uint8_t data5[] = { 0x40, 0x60, 0x00, 0x0D, 0x00}; // Set 0x6040.00 to 0x000D: Disable drives
   faulhaber_send_command(0x02, data5, 5);*/
 
-  // Set target position to unknown
+  // Change to position mode
+  static uint8_t data7[] = { 0x60, 0x60, 0x00, 0x01 }; // Set 0x6060.00 to 0x01:  Position mode
+  faulhaber_send_command(0x02, data7, 4);
+  chThdSleepMilliseconds(10);
+  static uint8_t data10[] = { 0x40, 0x60, 0x00, 0x0F, 0x00}; // Set 0x6040.00 to 0x000F: Enable operation
+  faulhaber_send_command(0x02, data10, 5);
+  chThdSleepMilliseconds(10);
+  faulhaber_ctrl.position_ready = true;
+
+  // Set target position to not set
+  int32_t current_target_position = INT32_MAX;
   faulhaber_ctrl.target_position = INT32_MAX;
-  faulhaber_ctrl.changing = false;
-  int32_t last_position = INT32_MAX;
-  uint32_t last_pos_cnt = 0;
 
   while (true) {
     // Request the current position
-    static uint8_t data6[] = { 0x64, 0x60, 0x00}; // Get 0x6064.00: Get the actual position
+    static uint8_t data6[] = {0x64, 0x60, 0x00}; // Get 0x6064.00: Get the actual position
     faulhaber_send_command(0x01, data6, 3);
     chThdSleepMilliseconds(10);
 
     // Change position if needed
-    if(!faulhaber_ctrl.changing && faulhaber_ctrl.target_position != INT32_MAX && abs(faulhaber_ctrl.actual_position-faulhaber_ctrl.target_position) > faulhaber_ctrl.deadband) {
-      static uint8_t data7[] = { 0x60, 0x60, 0x00, 0x01 }; // Set 0x6060.00 to 0x01:  Position mode
-      faulhaber_send_command(0x02, data7, 4);
-      chThdSleepMilliseconds(10);
-      uint8_t data8[] = { 0x7A, 0x60, 0x00, (faulhaber_ctrl.target_position & 0xFF), ((faulhaber_ctrl.target_position >> 8) & 0xFF), ((faulhaber_ctrl.target_position >> 16) & 0xFF), ((faulhaber_ctrl.target_position >> 24) & 0xFF) }; // Set 0x607A.00 to 0x00000000:  Target position 0
+    if(faulhaber_ctrl.target_position != INT32_MAX && faulhaber_ctrl.target_position != current_target_position) {
+      faulhaber_ctrl.position_ready = false;
+      faulhaber_ctrl.target_reached = false;
+      uint8_t data8[] = {0x7A, 0x60, 0x00, (faulhaber_ctrl.target_position & 0xFF), ((faulhaber_ctrl.target_position >> 8) & 0xFF), ((faulhaber_ctrl.target_position >> 16) & 0xFF), ((faulhaber_ctrl.target_position >> 24) & 0xFF) }; // Set 0x607A.00 to 0x00000000:  Target position 0
       faulhaber_send_command(0x02, data8, 7);
       chThdSleepMilliseconds(10);
-      /*static uint8_t data9[] = { 0x40, 0x60, 0x00, 0x0E, 0x00}; // Set 0x6040.00 to 0x000E: Enable operation
-      faulhaber_send_command(0x02, data9, 5);
-      chThdSleepMilliseconds(10);*/
-      static uint8_t data10[] = { 0x40, 0x60, 0x00, 0x0F, 0x00}; // Set 0x6040.00 to 0x000F: Enable operation
-      faulhaber_send_command(0x02, data10, 5);
-      chThdSleepMilliseconds(10);
-      static uint8_t data11[] = { 0x40, 0x60, 0x00, 0x3F, 0x00}; // Set 0x6040.00 to 0x003F: Start moving
+      static uint8_t data11[] = {0x40, 0x60, 0x00, 0x3F, 0x00}; // Set 0x6040.00 to 0x003F: Start moving (immediate)
       faulhaber_send_command(0x02, data11, 5);
-      chThdSleepMilliseconds(10);
-      faulhaber_ctrl.changing = true;
-      last_pos_cnt = 0;
-    } else if (faulhaber_ctrl.changing) {
-      if(abs(last_position-faulhaber_ctrl.actual_position) < faulhaber_ctrl.deadband/4)
-        last_pos_cnt++;
-      else
-        last_pos_cnt = 0;
 
-      if(abs(faulhaber_ctrl.actual_position-faulhaber_ctrl.target_position) < faulhaber_ctrl.deadband || last_pos_cnt > 1) {
-        /*static uint8_t data12[] = { 0x40, 0x60, 0x00, 0x0D, 0x00}; // Set 0x6040.00 to 0x000D: Disable drives
-        faulhaber_send_command(0x02, data12, 5);
-        chThdSleepMilliseconds(10);*/
-        faulhaber_ctrl.changing = false;
-        last_pos_cnt = 0;
+      // Wait for response for accepting new positions
+      start = chVTGetSystemTimeX();
+      while(!faulhaber_ctrl.position_ready) {
+        chThdSleepMilliseconds(2);
+
+        // Timeout after 200 milliseconds
+        if(chVTTimeElapsedSinceX(start) > TIME_MS2I(200)) {
+          // TODO
+          break;
+        }
       }
+
+      // Reset for next operation
+      current_target_position = faulhaber_ctrl.target_position;
+      static uint8_t data12[] = {0x40, 0x60, 0x00, 0x0F, 0x00}; // Set 0x6040.00 to 0x000F: Enable operation
+      faulhaber_send_command(0x02, data12, 5);
+      chThdSleepMilliseconds(10);
     }
-    last_position = faulhaber_ctrl.actual_position;
    
-    chThdSleepMilliseconds(75);
+    chThdSleepMilliseconds(90);
   }
 }
 
-/*
-static void esc_telem_broadcast_status(void) {
-  // Set the values
-  uavcan_equipment_esc_Status escStatus;
-  escStatus.error_count = esc_telem.data.timeout_cnt;
-  escStatus.voltage = esc_telem.data.voltage; // ((float)adc1_buffers[0].sum / (float)adc1_buffers[0].av_nb_sample) / 4095.f * 3.3f * 23;
-  escStatus.current = esc_telem.data.current; // ((float)adc1_buffers[1].sum / (float)adc1_buffers[1].av_nb_sample) / 4095.f * 3.3f * 23;
-  escStatus.temperature = esc_telem.data.temp + 274.15f;
-  escStatus.rpm = esc_telem.data.erpm / 1;
-  escStatus.esc_index = esc_telem.index;
 
-  uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
-  uint16_t total_size = uavcan_equipment_esc_Status_encode(&escStatus, buffer);
+static void faulhaber_ctrl_broadcast_status(void) {
+  // Set the values
+  int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos);
+  uavcan_equipment_actuator_Status actuatorStatus;
+  actuatorStatus.actuator_id = faulhaber_ctrl.index;
+  actuatorStatus.position = (double)faulhaber_ctrl.actual_position / (double)range * M_PI_2;
+
+  uint8_t buffer[UAVCAN_EQUIPMENT_ACTUATOR_STATUS_MAX_SIZE];
+  uint16_t total_size = uavcan_equipment_actuator_Status_encode(&actuatorStatus, buffer);
 
   static uint8_t transfer_id;
   uavcanBroadcastAll(
-      UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE,
-      UAVCAN_EQUIPMENT_ESC_STATUS_ID, &transfer_id,
+      UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+      UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID, &transfer_id,
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
 }
 
-static THD_WORKING_AREA(esc_telem_send_wa, 512);
-static THD_FUNCTION(esc_telem_send_thd, arg) {
+static THD_WORKING_AREA(faulhaber_ctrl_telem_send_wa, 512);
+static THD_FUNCTION(faulhaber_ctrl_telem_send_thd, arg) {
   (void)arg;
-  chRegSetThreadName("esc_telem");
+  chRegSetThreadName("faulhaber_ctrl_telem");
   while (true) {
-    esc_telem_broadcast_status();
-    chThdSleepMilliseconds(esc_telem.vt_delay);
+    faulhaber_ctrl_broadcast_status();
+    chThdSleepMilliseconds(faulhaber_ctrl.telem_vt_delay);
   }
-}*/
+}
 
 void faulhaber_ctrl_init(void) {
     // Get the configuration
@@ -230,7 +247,7 @@ void faulhaber_ctrl_init(void) {
         uartStart(faulhaber_ctrl.port, &uart_cfg);
         chThdCreateStatic(faulhaber_ctrl_rx_wa, sizeof(faulhaber_ctrl_rx_wa), NORMALPRIO+1, faulhaber_ctrl_rx_thd, NULL);
         chThdCreateStatic(faulhaber_ctrl_tx_wa, sizeof(faulhaber_ctrl_tx_wa), NORMALPRIO+2, faulhaber_ctrl_tx_thd, NULL);
-        //chThdCreateStatic(esc_telem_send_wa, sizeof(esc_telem_send_wa), NORMALPRIO-6, esc_telem_send_thd, NULL);
+        chThdCreateStatic(faulhaber_ctrl_telem_send_wa, sizeof(faulhaber_ctrl_telem_send_wa), NORMALPRIO-6, faulhaber_ctrl_telem_send_thd, NULL);
     }
 }
 

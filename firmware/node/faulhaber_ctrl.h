@@ -16,9 +16,10 @@ struct faulhaber_ctrl_t {
     uint32_t max_pos;           ///< Maximum position
 
     bool homing_completed;      ///< Once the homing is completed
-    int32_t actual_position;   ///< Actual measured position
-    int32_t target_position;   ///< The target position
-    bool changing;
+    bool position_ready;        ///< Ready for receiving positions
+    bool target_reached;        ///< When the target position is reached
+    int32_t actual_position;    ///< Actual measured position
+    int32_t target_position;    ///< The target position
 };
 extern struct faulhaber_ctrl_t faulhaber_ctrl;
 
