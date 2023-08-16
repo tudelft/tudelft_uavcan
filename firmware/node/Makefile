@@ -23,7 +23,7 @@ endif
 
 # C specific options here (added to USE_OPT).
 ifeq ($(USE_COPT),)
-  USE_COPT = 
+  USE_COPT = -Wno-address-of-packed-member
 endif
 
 # C++ specific options here (added to USE_OPT).
@@ -121,6 +121,7 @@ BUILDDIR := ../build/$(BOARD)/node
 DEPDIR   := ./.dep
 CANARDDIR  := ../lib/canard
 DSDLC_DIR  := ../lib/dsdlc_generated
+MAVLINK_DIR := ../lib/mavlink
 
 # Board files.
 include $(BOARDDIR)/$(BOARD)/board.mk
@@ -165,7 +166,8 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/equipment/esc/esc_Status.c \
        $(DSDLC_DIR)/uavcan/equipment/device/device_Temperature.c \
        $(DSDLC_DIR)/uavcan/equipment/actuator/actuator_Status.c \
-	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c faulhaber_ctrl.c \
+	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
+       faulhaber_ctrl.c drs_parachute.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -196,7 +198,7 @@ TCPPSRC =
 ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR) $(MAVLINK_DIR)
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

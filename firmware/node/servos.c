@@ -253,6 +253,16 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
     faulhaber_ctrl.target_position = (uint64_t)faulhaber_ctrl.min_pos + ((commands[faulhaber_ctrl.index] + 8192)*range / (8191+8192));
   }
 
+#include "drs_parachute.h"
+  if(drs_parachute.port != NULL && drs_parachute.index < cnt) {
+    if(commands[drs_parachute.index] > 4000)
+      drs_parachute_set(DRS_STATUS_RELEASE);
+    else if(commands[drs_parachute.index] < -4000)
+      drs_parachute_set(DRS_STATUS_DISABLE);
+    else
+      drs_parachute_set(DRS_STATUS_ENABLE);
+  }
+
   // Commit the commands
   board_set_servos(true,
 #ifdef SERVO1_LINE

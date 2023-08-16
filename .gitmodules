@@ -7,3 +7,6 @@
 [submodule "firmware/lib/public_regulated_data_types"]
 	path = firmware/lib/public_regulated_data_types
 	url = https://github.com/UAVCAN/public_regulated_data_types.git
+[submodule "firmware/lib/mavlink"]
+	path = firmware/lib/mavlink
+	url = git@github.com:mavlink/c_library_v2.git

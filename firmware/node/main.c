@@ -22,6 +22,7 @@
 #include "config.h"
 #include "uavcan.h"
 #include "adcs.h"
+#include "drs_parachute.h"
 #include "servos.h"
 #include "faulhaber_ctrl.h"
 #include "esc_telem.h"
@@ -51,6 +52,7 @@ int main(void) {
   config_init();
   uavcanInit();
   adcs_init();
+  drs_parachute_init();
   servos_init();
   faulhaber_ctrl_init();
   esc_telem_init();
