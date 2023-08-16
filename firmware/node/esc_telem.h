@@ -4,7 +4,7 @@
 #include <hal.h>
 
 struct esc_telem_data_t {
-    int8_t temp;
+    int16_t temp;
     float voltage;
     float current;
     uint16_t consumption;

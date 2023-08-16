@@ -5,7 +5,8 @@
 
 struct esc_telem_t esc_telem;
 static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len);
-static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len);
+static void esc_telem_parse_tmotor_flame(uint8_t msg[], uint8_t len);
+static void esc_telem_parse_tmotor_alpha(uint8_t msg[], uint8_t len);
 
 static THD_WORKING_AREA(esc_telem_wa, 512);
 static THD_FUNCTION(esc_telem_thd, arg) {
@@ -20,7 +21,9 @@ static THD_FUNCTION(esc_telem_thd, arg) {
         if(esc_telem.type == 0)
             esc_telem_parse_tmotorf(buf, recv_size);
         else if(esc_telem.type == 1)
-            esc_telem_parse_tmotora(buf, recv_size);
+            esc_telem_parse_tmotor_flame(buf, recv_size);
+        else if(esc_telem.type == 2)
+            esc_telem_parse_tmotor_alpha(buf, recv_size);
     }
   }
 }
@@ -113,6 +116,9 @@ static uint8_t get_crc8(uint8_t *Buf, uint8_t BufLen) {
   return (crc);
 }
 
+/**
+ * T-Motor F.. protocol
+*/
 static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len) { 
     // Verify the CRC and size
     if(len == 10 && get_crc8(msg, 9) == msg[9]) {
@@ -136,8 +142,10 @@ static const uint8_t tempTable[ 220 ] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,1
 			  127,127,128,129,129};
 
 
-/* Parse the tmotor A ESC message */
-static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
+/**
+ * T-Motor Flame protocol
+*/
+static void esc_telem_parse_tmotor_flame(uint8_t msg[], uint8_t len)
 {
     // Verify the start
     if(len < 24 || msg[0] != 0x9B || msg[1] != 0x16 || msg[2] != 0x04 || msg[3] != 0x02)
@@ -170,4 +178,39 @@ static void esc_telem_parse_tmotora(uint8_t msg[], uint8_t len)
     // alpha_esc_data.capacitor_temp = tempTable[msg[19]];
     // alpha_esc_data.status_code = (uint16_t)((msg[20] <<8 | msg[21]));
     // alpha_esc_data.verify_code = (uint16_t)((msg[22] <<8 | msg[23]));// shift the right byte instead of the
+}
+
+/**
+ * T-Motor Alpha protocol
+*/
+static void esc_telem_parse_tmotor_alpha(uint8_t msg[], uint8_t len)
+{
+    // Verify the start
+    if(len < 24 || msg[0] != 0x9B || msg[1] != 0x16 || msg[2] != 0x01 || msg[3] != 0x02)
+        return;
+
+    // Very the checksum
+    uint8_t checksum = 0;
+    for(uint8_t i = 0; i < 22; i++)
+        checksum += msg[i];
+    uint8_t recv_checksum = (uint16_t)((msg[22]) | (msg[23]<<8));
+    if(checksum != recv_checksum)
+        return;
+
+    // Dummy variables to apply the bitshifting later (for scaling according to protocol)
+    //uint16_t rx_throttle_dummy = (msg[6] <<8 | msg[7]);
+    //uint16_t output_throttle_dummy = (msg[8] <<8 | msg[9]);
+    uint16_t rpm_dummy = (msg[10] <<8 | msg[11]);
+    // Read the alpha esc information
+    //alpha_esc_data.bale_no = (uint16_t)((msg[4] <<8 | msg[5]));
+    //alpha_esc_data.rx_throttle = (uint16_t)((rx_throttle_dummy)*100/1024); // Original (uint16_t)((msg[6] <<8 | msg[7])*100/1024);
+    //alpha_esc_data.output_throttle = (uint16_t)((output_throttle_dummy)*100/1024); // Original (uint16_t)((msg[8] <<8 | msg[9])*100/1024);
+    esc_telem.data.erpm = (uint16_t)(rpm_dummy) * 20;
+    esc_telem.data.voltage = ((uint16_t)((msg[12] <<8 | msg[13]))) / 10.0f; // Needs to be divided by 10 to get real voltage
+    esc_telem.data.current = ((int16_t)((msg[14] <<8 | msg[15]))) / 64.f;// Needs to be divided by 64
+    //alpha_esc_data.phase_wire_current = ((int16_t)((msg[16] <<8 | msg[17]))); //Needs to be divided by 64
+    esc_telem.data.temp = tempTable[msg[18]];
+    //alpha_esc_data.capacitor_temp = Table[msg[19]];
+    //alpha_esc_data.status_code = (uint16_t)((msg[20] <<8 | msg[21]));
+    //alpha_esc_data.verify_code = (uint16_t)((msg[22] <<8 | msg[23]));// shift the right byte instead of the
 }
