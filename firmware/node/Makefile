@@ -163,11 +163,14 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_DIR)/uavcan/protocol/tunnel/tunnel_Broadcast.c \
        $(DSDLC_DIR)/uavcan/tunnel/tunnel_Call.c \
        $(DSDLC_DIR)/uavcan/tunnel/tunnel_Protocol.c \
+       $(DSDLC_DIR)/uavcan/uavcan_Timestamp.c \
+       $(DSDLC_DIR)/uavcan/uavcan_CoarseOrientation.c \
        $(DSDLC_DIR)/uavcan/equipment/esc/esc_Status.c \
        $(DSDLC_DIR)/uavcan/equipment/device/device_Temperature.c \
        $(DSDLC_DIR)/uavcan/equipment/actuator/actuator_Status.c \
+       $(DSDLC_DIR)/uavcan/equipment/range_sensor/range_sensor_Measurement.c \
 	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
-       faulhaber_ctrl.c drs_parachute.c \
+       faulhaber_ctrl.c drs_parachute.c tfmini.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

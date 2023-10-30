@@ -17,6 +17,7 @@
 #include <uavcan/equipment/esc/Status.h>
 #include <uavcan/equipment/device/Temperature.h>
 #include <uavcan/equipment/actuator/Status.h>
+#include <uavcan/equipment/range_sensor/Measurement.h>
 #include <uavcan/protocol/param/GetSet.h>
 #include <uavcan/protocol/param/ExecuteOpcode.h>
 #include <uavcan/protocol/param/ExecuteOpcode.h>

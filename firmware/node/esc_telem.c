@@ -17,7 +17,7 @@ static THD_FUNCTION(esc_telem_thd, arg) {
     uint8_t buf[32];
 
     // Try to receive bytes
-    if(uartReceiveTimeout(esc_telem.port, &recv_size, (void *)buf, TIME_MS2I(350)) == MSG_OK) {
+    if(uartReceiveTimeout(esc_telem.port, &recv_size, (void *)buf, TIME_MS2I(40)) == MSG_OK) {
         if(esc_telem.type == 0)
             esc_telem_parse_tmotorf(buf, recv_size);
         else if(esc_telem.type == 1)

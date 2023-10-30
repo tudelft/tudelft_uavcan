@@ -65,6 +65,11 @@ struct config_item_t config_items[] = {
     {.name = "DRS port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "DRS baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
 
+/* TFMini configuration */
+    {.name = "TFMINI port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
+    {.name = "TFMINI baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
+    {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 1000},
+
 /* POWER ADC's configuration */
 #ifdef ADC_POWER1_MUL
     {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 1000},

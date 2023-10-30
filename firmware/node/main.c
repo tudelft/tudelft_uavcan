@@ -26,6 +26,7 @@
 #include "servos.h"
 #include "faulhaber_ctrl.h"
 #include "esc_telem.h"
+#include "tfmini.h"
 
 /*===========================================================================*/
 /* Generic code.                                                             */
@@ -56,6 +57,7 @@ int main(void) {
   servos_init();
   faulhaber_ctrl_init();
   esc_telem_init();
+  tfmini_init();
 
   /*
    * Normal main() thread activity, spawning shells.
