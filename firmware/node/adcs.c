@@ -14,7 +14,15 @@ static uint8_t adc1_samples_tmp[ADC_MAX_CHANNELS];
 static uint8_t adc1_channel_map[ADC_MAX_CHANNELS];
 static uint8_t adc1_num_channels = 0;
 
+struct adc_chan_config_t {
+  bool available;
+  ioline_t line;
+  uint8_t channel;
+};
+static struct adc_chan_config_t adc1_chan_config[ADC_MAX_CHANNELS] = {0};
+
 struct adc_ntc_t {
+  uint8_t channel;
   uint8_t channel_idx;
   uint8_t device_id;
   float frequency;
@@ -25,14 +33,27 @@ struct adc_ntc_t {
   float she_c;
 };
 
-#ifdef ADC_NTC1_CHANNEL
 static struct adc_ntc_t ntc1;
 static THD_WORKING_AREA(ntc1_wa, 512);
-#endif
-#ifdef ADC_NTC2_CHANNEL
 static struct adc_ntc_t ntc2;
 static THD_WORKING_AREA(ntc2_wa, 512);
-#endif
+
+struct potmeter_t {
+  uint8_t channel;
+  uint8_t channel_idx;
+  uint8_t device_id;
+  float frequency;
+  uint8_t type;         ///< 0: Actuator angle
+
+  float cal_a;          ///< (x - a) * b
+  float cal_b;          ///< (x - a) * b
+};
+
+static struct potmeter_t potmeter1;
+static THD_WORKING_AREA(potmeter1_wa, 512);
+static struct potmeter_t potmeter2;
+static THD_WORKING_AREA(potmeter2_wa, 512);
+
 
 /**
  * Adc1 callback
@@ -152,7 +173,6 @@ static void adc_configure(ADCConversionGroup *cfg, uint8_t num_channels, const u
 /*
  * NTC thread.
  */
-#include "esc_telem.h"
 static THD_FUNCTION(ntc_thread, p) {
   struct adc_ntc_t *ntc = (struct adc_ntc_t *)p;
 
@@ -176,9 +196,38 @@ static THD_FUNCTION(ntc_thread, p) {
         UAVCAN_EQUIPMENT_DEVICE_TEMPERATURE_SIGNATURE,
         UAVCAN_EQUIPMENT_DEVICE_TEMPERATURE_ID, &transfer_id,
         CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+ 
+    chThdSleepMilliseconds(vt_delay);
+  }
+}
 
-    
-    esc_telem.data.timeout_cnt++;
+/*
+ * POTMETER thread.
+ */
+static THD_FUNCTION(potmeter_thread, p) {
+  struct potmeter_t *potmeter = (struct potmeter_t *)p;
+
+  uint64_t vt_delay = 1000.f / potmeter->frequency;
+  while(true) {
+    // Calculate the temperature
+    float raw_adc = (adc1_buffers[potmeter->channel_idx].sum / adc1_buffers[potmeter->channel_idx].av_nb_sample);
+    float scaled_value = (raw_adc - potmeter->cal_a) * potmeter->cal_b;
+
+    // Set the values
+    uavcan_equipment_actuator_Status actuatorStatus;
+    actuatorStatus.actuator_id = potmeter->device_id;
+    actuatorStatus.position = scaled_value;
+    actuatorStatus.force = raw_adc; // For debugging
+
+    uint8_t buffer[UAVCAN_EQUIPMENT_ACTUATOR_STATUS_MAX_SIZE];
+    uint16_t total_size = uavcan_equipment_actuator_Status_encode(&actuatorStatus, buffer);
+
+    static uint8_t transfer_id;
+    uavcanBroadcastAll(
+        UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
+        UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID, &transfer_id,
+        CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+ 
     chThdSleepMilliseconds(vt_delay);
   }
 }
@@ -186,40 +235,123 @@ static THD_FUNCTION(ntc_thread, p) {
 void adcs_init(void) {
   adc1_num_channels = 0;
 
+  /* Define all available channels */
+#ifdef ADC_CHAN0_LINE
+  adc1_chan_config[0].channel = ADC_CHANNEL_IN0;
+  adc1_chan_config[0].line = ADC_CHAN0_LINE;
+  adc1_chan_config[0].available = true;
+#endif
+#ifdef ADC_CHAN1_LINE
+  adc1_chan_config[1].channel = ADC_CHANNEL_IN1;
+  adc1_chan_config[1].line = ADC_CHAN1_LINE;
+  adc1_chan_config[1].available = true;
+#endif
+#ifdef ADC_CHAN2_LINE
+  adc1_chan_config[2].channel = ADC_CHANNEL_IN2;
+  adc1_chan_config[2].line = ADC_CHAN2_LINE;
+  adc1_chan_config[2].available = true;
+#endif
+#ifdef ADC_CHAN3_LINE
+  adc1_chan_config[3].channel = ADC_CHANNEL_IN3;
+  adc1_chan_config[3].line = ADC_CHAN3_LINE;
+  adc1_chan_config[3].available = true;
+#endif
+#ifdef ADC_CHAN4_LINE
+  adc1_chan_config[4].channel = ADC_CHANNEL_IN4;
+  adc1_chan_config[4].line = ADC_CHAN4_LINE;
+  adc1_chan_config[4].available = true;
+#endif
+#ifdef ADC_CHAN5_LINE
+  adc1_chan_config[5].channel = ADC_CHANNEL_IN5;
+  adc1_chan_config[5].line = ADC_CHAN5_LINE;
+  adc1_chan_config[5].available = true;
+#endif
+#ifdef ADC_CHAN6_LINE
+  adc1_chan_config[6].channel = ADC_CHANNEL_IN6;
+  adc1_chan_config[6].line = ADC_CHAN6_LINE;
+  adc1_chan_config[6].available = true;
+#endif
+#ifdef ADC_CHAN7_LINE
+  adc1_chan_config[7].channel = ADC_CHANNEL_IN7;
+  adc1_chan_config[7].line = ADC_CHAN7_LINE;
+  adc1_chan_config[7].available = true;
+#endif
+#ifdef ADC_CHAN8_LINE
+  adc1_chan_config[8].channel = ADC_CHANNEL_IN8;
+  adc1_chan_config[8].line = ADC_CHAN8_LINE;
+  adc1_chan_config[8].available = true;
+#endif
+#ifdef ADC_CHAN9_LINE
+  adc1_chan_config[9].channel = ADC_CHANNEL_IN9;
+  adc1_chan_config[9].line = ADC_CHAN9_LINE;
+  adc1_chan_config[9].available = true;
+#endif
+
+  /* Define default onboard power measurements */
 #ifdef ADC_POWER1_CHANNEL
-  adc1_channel_map[adc1_num_channels++] = ADC_POWER1_CHANNEL;
-  palSetLineMode(ADC_POWER1_LINE, PAL_MODE_INPUT_ANALOG);
+  if(adc1_chan_config[ADC_POWER1_CHANNEL].available) {
+    adc1_channel_map[adc1_num_channels++] = adc1_chan_config[ADC_POWER1_CHANNEL].channel;
+    palSetLineMode(adc1_chan_config[ADC_POWER1_CHANNEL].line, PAL_MODE_INPUT_ANALOG);
+  }
 #endif
 #ifdef ADC_POWER2_CHANNEL
-  adc1_channel_map[adc1_num_channels++] = ADC_POWER2_CHANNEL;
-  palSetLineMode(ADC_POWER2_LINE, PAL_MODE_INPUT_ANALOG);
+  if(adc1_chan_config[ADC_POWER2_CHANNEL].available) {
+    adc1_channel_map[adc1_num_channels++] = adc1_chan_config[ADC_POWER2_CHANNEL].channel;
+    palSetLineMode(adc1_chan_config[ADC_POWER2_CHANNEL].line, PAL_MODE_INPUT_ANALOG);
+  }
 #endif
-#ifdef ADC_NTC1_CHANNEL
+
+  /* Possible NTC inputs */
   ntc1.device_id = config_get_by_name("NTC1 device id", 0)->val.i;
+  ntc1.channel = config_get_by_name("NTC1 channel", 0)->val.i;
   ntc1.frequency = config_get_by_name("NTC1 frequency", 0)->val.f;
   ntc1.pullup_r = config_get_by_name("NTC1 pull up R", 0)->val.f;
   ntc1.she_a = config_get_by_name("NTC1 SH eq a", 0)->val.f;
   ntc1.she_b = config_get_by_name("NTC1 SH eq b", 0)->val.f;
   ntc1.she_c = config_get_by_name("NTC1 SH eq c", 0)->val.f;
-  if(ntc1.frequency > 0) {
+  if(ntc1.frequency > 0 && adc1_chan_config[ntc1.channel].available) {
     ntc1.channel_idx = adc1_num_channels++;
-    adc1_channel_map[ntc1.channel_idx] = ADC_NTC1_CHANNEL;
-    palSetLineMode(ADC_NTC1_LINE, PAL_MODE_INPUT_ANALOG);
+    adc1_channel_map[ntc1.channel_idx] = adc1_chan_config[ntc1.channel].channel;
+    palSetLineMode(adc1_chan_config[ntc1.channel].line, PAL_MODE_INPUT_ANALOG);
   }
-#endif
-#ifdef ADC_NTC2_CHANNEL
+
   ntc2.device_id = config_get_by_name("NTC2 device id", 0)->val.i;
+  ntc2.channel = config_get_by_name("NTC2 channel", 0)->val.i;
   ntc2.frequency = config_get_by_name("NTC2 frequency", 0)->val.f;
   ntc2.pullup_r = config_get_by_name("NTC2 pull up R", 0)->val.f;
   ntc2.she_a = config_get_by_name("NTC2 SH eq a", 0)->val.f;
   ntc2.she_b = config_get_by_name("NTC2 SH eq b", 0)->val.f;
   ntc2.she_c = config_get_by_name("NTC2 SH eq c", 0)->val.f;
-  if(ntc2.frequency > 0) {
+  if(ntc2.frequency > 0 && adc1_chan_config[ntc2.channel].available) {
     ntc2.channel_idx = adc1_num_channels++;
-    adc1_channel_map[ntc2.channel_idx] = ADC_NTC2_CHANNEL;
-    palSetLineMode(ADC_NTC2_LINE, PAL_MODE_INPUT_ANALOG);
+    adc1_channel_map[ntc2.channel_idx] = adc1_chan_config[ntc2.channel].channel;
+    palSetLineMode(adc1_chan_config[ntc2.channel].line, PAL_MODE_INPUT_ANALOG);
   }
-#endif
+
+  /* Possible POTMETER inputs */
+  potmeter1.device_id = config_get_by_name("POTMETER1 device id", 0)->val.i;
+  potmeter1.channel = config_get_by_name("POTMETER1 channel", 0)->val.i;
+  potmeter1.frequency = config_get_by_name("POTMETER1 frequency", 0)->val.f;
+  potmeter1.type = config_get_by_name("POTMETER1 type", 0)->val.i;
+  potmeter1.cal_a = config_get_by_name("POTMETER1 cal_a", 0)->val.f;
+  potmeter1.cal_b = config_get_by_name("POTMETER1 cal_b", 0)->val.f;
+  if(potmeter1.frequency > 0 && adc1_chan_config[potmeter1.channel].available) {
+    potmeter1.channel_idx = adc1_num_channels++;
+    adc1_channel_map[potmeter1.channel_idx] = adc1_chan_config[potmeter1.channel].channel;
+    palSetLineMode(adc1_chan_config[potmeter1.channel].line, PAL_MODE_INPUT_ANALOG);
+  }
+
+  potmeter2.device_id = config_get_by_name("POTMETER2 device id", 0)->val.i;
+  potmeter2.channel = config_get_by_name("POTMETER2 channel", 0)->val.i;
+  potmeter2.frequency = config_get_by_name("POTMETER2 frequency", 0)->val.f;
+  potmeter2.type = config_get_by_name("POTMETER2 type", 0)->val.i;
+  potmeter2.cal_a = config_get_by_name("POTMETER2 cal_a", 0)->val.f;
+  potmeter2.cal_b = config_get_by_name("POTMETER2 cal_b", 0)->val.f;
+  if(potmeter2.frequency > 0 && adc1_chan_config[potmeter2.channel].available) {
+    potmeter2.channel_idx = adc1_num_channels++;
+    adc1_channel_map[potmeter2.channel_idx] = adc1_chan_config[potmeter2.channel].channel;
+    palSetLineMode(adc1_chan_config[potmeter2.channel].line, PAL_MODE_INPUT_ANALOG);
+  }
 
   // Configure the ADC structure
   adc_configure(&adc1_group, adc1_num_channels, adc1_channel_map, ADC_SAMPLE_41P5, adc1callback, adc1errorcallback);
@@ -228,14 +360,19 @@ void adcs_init(void) {
   adcStart(&ADCD1, NULL);
   adcStartConversion(&ADCD1, &adc1_group, adc_samples, ADC_MAX_CHANNELS * MAX_AV_NB_SAMPLE);
 
-#ifdef ADC_NTC1_CHANNEL
+  // Start NTC transmitting threads
   if(ntc1.frequency > 0) {
-    chThdCreateStatic(ntc1_wa, sizeof(ntc1_wa), NORMALPRIO-20, ntc_thread, (void*)&ntc1);
+    chThdCreateStatic(ntc1_wa, sizeof(ntc1_wa), NORMALPRIO-21, ntc_thread, (void*)&ntc1);
   }
-#endif
-#ifdef ADC_NTC2_CHANNEL
   if(ntc2.frequency > 0) {
-    chThdCreateStatic(ntc2_wa, sizeof(ntc2_wa), NORMALPRIO-20, ntc_thread, (void*)&ntc2);
+    chThdCreateStatic(ntc2_wa, sizeof(ntc2_wa), NORMALPRIO-21, ntc_thread, (void*)&ntc2);
   }
-#endif
+
+  // Start POTMETER transmitting threads
+  if(potmeter1.frequency > 0) {
+    chThdCreateStatic(potmeter1_wa, sizeof(potmeter1_wa), NORMALPRIO-20, potmeter_thread, (void*)&potmeter1);
+  }
+  if(potmeter2.frequency > 0) {
+    chThdCreateStatic(potmeter2_wa, sizeof(potmeter2_wa), NORMALPRIO-20, potmeter_thread, (void*)&potmeter2);
+  }
 }

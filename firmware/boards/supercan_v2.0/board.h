@@ -67,6 +67,9 @@
 #define SERVO5_LINE       PAL_LINE(GPIOA, 2U)  // TIM5_CH3/TIM2_CH3
 #define SERVO6_LINE       PAL_LINE(GPIOA, 9U)  // TIM1_CH2
 #define SERVO7_LINE       PAL_LINE(GPIOB, 10U) // TIM2_CH3 (REMAP)
+#define SERVO8_LINE       PAL_LINE(GPIOA, 6U)  // TIM3_CH1
+#define SERVO9_LINE       PAL_LINE(GPIOA, 7U)  // TIM3_CH2/TIM1_CH1N
+#define SERVO10_LINE      PAL_LINE(GPIOA, 1U)  // TIM2_CH2/TIM5_CH2
 
 #define SERIAL1_RX_LINE   PAL_LINE(GPIOA, 10U) // USART1_RX
 #define SERIAL1_TX_LINE   PAL_LINE(GPIOA, 9U)  // USART1_TX
@@ -75,19 +78,23 @@
 #define SERIAL3_RX_LINE   PAL_LINE(GPIOB, 11U) // USART3_RX
 #define SERIAL3_TX_LINE   PAL_LINE(GPIOB, 10U) // USART3_TX
 
-#define ADC_POWER1_LINE     PAL_LINE(GPIOB, 1U)  // ADC12_IN9
-#define ADC_POWER1_CHANNEL  ADC_CHANNEL_IN9
+
+#define ADC_CHAN0_LINE      PAL_LINE(GPIOA, 0U) // ADC12_IN0
+#define ADC_CHAN1_LINE      PAL_LINE(GPIOA, 1U) // ADC12_IN1
+#define ADC_CHAN2_LINE      PAL_LINE(GPIOA, 2U) // ADC12_IN2
+#define ADC_CHAN3_LINE      PAL_LINE(GPIOA, 3U) // ADC12_IN3
+#define ADC_CHAN5_LINE      PAL_LINE(GPIOA, 5U) // ADC12_IN5
+#define ADC_CHAN6_LINE      PAL_LINE(GPIOA, 6U) // ADC12_IN6
+#define ADC_CHAN7_LINE      PAL_LINE(GPIOA, 7U) // ADC12_IN6
+#define ADC_CHAN8_LINE      PAL_LINE(GPIOB, 0U) // ADC12_IN8
+#define ADC_CHAN9_LINE      PAL_LINE(GPIOB, 1U) // ADC12_IN9
+#define ADC_MAX_CHANNELS    10
+
+#define ADC_POWER1_CHANNEL  9
 #define ADC_POWER1_MUL      23.0f
 #define ADC_POWER2_LINE     PAL_LINE(GPIOB, 0U)  // ADC12_IN8
-#define ADC_POWER2_CHANNEL  ADC_CHANNEL_IN8
+#define ADC_POWER2_CHANNEL  8
 #define ADC_POWER2_MUL      23.0f
-
-#define ADC_NTC1_LINE       PAL_LINE(GPIOA, 0U)  // ADC12_IN0
-#define ADC_NTC1_CHANNEL    ADC_CHANNEL_IN0
-#define ADC_NTC2_LINE       PAL_LINE(GPIOA, 1U)  // ADC12_IN1
-#define ADC_NTC2_CHANNEL    ADC_CHANNEL_IN1
-
-#define ADC_MAX_CHANNELS  4
 
 /*
  * I/O ports initial setup, this configuration is established soon after reset
@@ -219,9 +226,9 @@ extern "C" {
 #endif
   void boardInit(void);
 
-  void board_init_servos(bool servo1, bool servo2, bool servo3, bool servo4, bool servo5, bool servo6, bool servo7);
+  void board_init_servos(bool servos[], uint8_t cnt);
   void board_disable_servos(void);
-  void board_set_servos(bool lock, uint16_t servo1, uint16_t servo2, uint16_t servo3, uint16_t servo4, uint16_t servo5, uint16_t servo6, uint16_t servo7);
+  void board_set_servos(bool lock, uint16_t servos[], uint8_t cnt);
 
 #ifdef __cplusplus
 }

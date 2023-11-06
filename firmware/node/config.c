@@ -40,6 +40,18 @@ struct config_item_t config_items[] = {
     {.name = "SERVO7 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
     {.name = "SERVO7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
 #endif
+#ifdef SERVO8_LINE
+    {.name = "SERVO8 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO8 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO9_LINE
+    {.name = "SERVO9 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO9 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
+#ifdef SERVO10_LINE
+    {.name = "SERVO10 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "SERVO10 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
+#endif
 
 /* FAULHABER configuration */
     {.name = "FAULHABER index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
@@ -83,25 +95,41 @@ struct config_item_t config_items[] = {
 #endif
 
 /* NTC ADC's configuration */
-#ifdef ADC_NTC1_LINE
     {.name = "NTC1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "NTC1 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
     {.name = "NTC1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
     {.name = "NTC1 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
     {.name = "NTC1 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
     {.name = "NTC1 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
     {.name = "NTC1 SH eq c", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
-#endif
-#ifdef ADC_NTC2_LINE
+
     {.name = "NTC2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "NTC2 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
     {.name = "NTC2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
     {.name = "NTC2 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
     {.name = "NTC2 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
     {.name = "NTC2 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
     {.name = "NTC2 SH eq c", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
-#endif
+
+/* POTMETER ADC's configuration */
+    {.name = "POTMETER1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "POTMETER1 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POTMETER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "POTMETER1 type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 5},
+    {.name = "POTMETER1 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
+    {.name = "POTMETER1 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},
+
+    {.name = "POTMETER2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "POTMETER2 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POTMETER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "POTMETER2 type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 5},
+    {.name = "POTMETER2 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
+    {.name = "POTMETER2 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},
 };
 static uint16_t config_crc = 0;
 const uint8_t config_items_cnt = sizeof(config_items) / sizeof(struct config_item_t);
+
+//char (*__kaboom)[sizeof(config_items)] = 1; // Way to verify the size while compiling
 
 static uint16_t calc_crc(struct config_item_t *config_items, uint8_t len) {
     uint8_t *data = (uint8_t *)config_items;

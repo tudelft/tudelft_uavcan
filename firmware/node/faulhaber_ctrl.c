@@ -170,7 +170,6 @@ static THD_FUNCTION(faulhaber_ctrl_tx_thd, arg) {
   }
 }
 
-
 static void faulhaber_ctrl_broadcast_status(void) {
   // Set the values
   int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos);

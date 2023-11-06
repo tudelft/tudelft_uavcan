@@ -39,6 +39,18 @@ struct servos_t {
   uint8_t servo7_idx;
   uint16_t servo7_failsafe;
 #endif
+#ifdef SERVO8_LINE
+  uint8_t servo8_idx;
+  uint16_t servo8_failsafe;
+#endif
+#ifdef SERVO9_LINE
+  uint8_t servo9_idx;
+  uint16_t servo9_failsafe;
+#endif
+#ifdef SERVO10_LINE
+  uint8_t servo10_idx;
+  uint16_t servo10_failsafe;
+#endif
 };
 static struct servos_t servos = {
   .initialized = false
@@ -46,7 +58,7 @@ static struct servos_t servos = {
 
 static void servos_timeout_cb(void *arg __attribute__((unused))) {
   // When no commands are received timeout and set everything to failsafe
-  board_set_servos(false,
+  uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
     servos.servo1_failsafe,
 #endif
@@ -66,9 +78,19 @@ static void servos_timeout_cb(void *arg __attribute__((unused))) {
     servos.servo6_failsafe,
 #endif
 #ifdef SERVO7_LINE
-    servos.servo7_failsafe
+    servos.servo7_failsafe,
 #endif
-  );
+#ifdef SERVO8_LINE
+    servos.servo8_failsafe,
+#endif
+#ifdef SERVO9_LINE
+    servos.servo9_failsafe,
+#endif
+#ifdef SERVO10_LINE
+    servos.servo10_failsafe,
+#endif
+  };
+  board_set_servos(false, servo_values, sizeof(servo_values) / sizeof(uint16_t));
 }
 
 void servos_init(void) {
@@ -103,9 +125,21 @@ void servos_init(void) {
   servos.servo7_idx = config_get_by_name("SERVO7 index", 0)->val.i;
   servos.servo7_failsafe = config_get_by_name("SERVO7 failsafe", 0)->val.i;
 #endif
+#ifdef SERVO8_LINE
+  servos.servo8_idx = config_get_by_name("SERVO8 index", 0)->val.i;
+  servos.servo8_failsafe = config_get_by_name("SERVO8 failsafe", 0)->val.i;
+#endif
+#ifdef SERVO9_LINE
+  servos.servo9_idx = config_get_by_name("SERVO9 index", 0)->val.i;
+  servos.servo9_failsafe = config_get_by_name("SERVO9 failsafe", 0)->val.i;
+#endif
+#ifdef SERVO10_LINE
+  servos.servo10_idx = config_get_by_name("SERVO10 index", 0)->val.i;
+  servos.servo10_failsafe = config_get_by_name("SERVO10 failsafe", 0)->val.i;
+#endif
 
   // Initialize the servos which are used
-  board_init_servos(
+  bool servos_enable[] = {
 #ifdef SERVO1_LINE
     (servos.servo1_idx != 255),
 #endif
@@ -125,12 +159,22 @@ void servos_init(void) {
     (servos.servo6_idx != 255),
 #endif
 #ifdef SERVO7_LINE
-    (servos.servo7_idx != 255)
+    (servos.servo7_idx != 255),
 #endif
-  );
+#ifdef SERVO8_LINE
+    (servos.servo8_idx != 255),
+#endif
+#ifdef SERVO9_LINE
+    (servos.servo9_idx != 255),
+#endif
+#ifdef SERVO10_LINE
+    (servos.servo10_idx != 255),
+#endif
+  };
+  board_init_servos(servos_enable, sizeof(servos_enable) / sizeof(bool));
 
   // Set all servos to the initial failsafe value
-  board_set_servos(true,
+  uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
     servos.servo1_failsafe,
 #endif
@@ -150,9 +194,19 @@ void servos_init(void) {
     servos.servo6_failsafe,
 #endif
 #ifdef SERVO7_LINE
-    servos.servo7_failsafe
+    servos.servo7_failsafe,
 #endif
-  );
+#ifdef SERVO8_LINE
+    servos.servo8_failsafe,
+#endif
+#ifdef SERVO9_LINE
+    servos.servo9_failsafe,
+#endif
+#ifdef SERVO10_LINE
+    servos.servo10_failsafe,
+#endif
+  };
+  board_set_servos(true, servo_values, sizeof(servo_values) / sizeof(uint16_t));
 
   // Initialize the servo timeout timer
   chVTObjectInit(&servos.timeout_vt);
@@ -246,6 +300,33 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
     servo7_cmd = servos.servo7_failsafe;
   }
 #endif
+#ifdef SERVO8_LINE
+  int16_t servo8_cmd;
+  if(servos.servo8_idx < cnt) {
+    servo8_cmd = 1500+(commands[servos.servo8_idx]*500/8191);
+    if(servo8_cmd < 0) servo8_cmd = 0;
+  } else {
+    servo8_cmd = servos.servo8_failsafe;
+  }
+#endif
+#ifdef SERVO9_LINE
+  int16_t servo9_cmd;
+  if(servos.servo9_idx < cnt) {
+    servo9_cmd = 1500+(commands[servos.servo9_idx]*500/8191);
+    if(servo9_cmd < 0) servo9_cmd = 0;
+  } else {
+    servo9_cmd = servos.servo9_failsafe;
+  }
+#endif
+#ifdef SERVO10_LINE
+  int16_t servo10_cmd;
+  if(servos.servo10_idx < cnt) {
+    servo10_cmd = 1500+(commands[servos.servo10_idx]*500/8191);
+    if(servo10_cmd < 0) servo10_cmd = 0;
+  } else {
+    servo10_cmd = servos.servo10_failsafe;
+  }
+#endif
 
 #include "faulhaber_ctrl.h"
   if(faulhaber_ctrl.port != NULL && faulhaber_ctrl.index < cnt) {
@@ -264,7 +345,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   }
 
   // Commit the commands
-  board_set_servos(true,
+  uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
     servo1_cmd,
 #endif
@@ -284,9 +365,19 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
     servo6_cmd,
 #endif
 #ifdef SERVO7_LINE
-    servo7_cmd
+    servo7_cmd,
 #endif
-  );
+#ifdef SERVO8_LINE
+    servo8_cmd,
+#endif
+#ifdef SERVO9_LINE
+    servo9_cmd,
+#endif
+#ifdef SERVO10_LINE
+    servo10_cmd,
+#endif
+  };
+  board_set_servos(true, servo_values, sizeof(servo_values) / sizeof(uint16_t));
 
   // Enable timeout
   chVTSet(&servos.timeout_vt, TIME_MS2I(servos.node_timeout), servos_timeout_cb, NULL);
