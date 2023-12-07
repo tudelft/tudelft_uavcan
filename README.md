@@ -1,10 +1,12 @@
 ## TU Delft UAVCAN modules
 This repository contains the UAVCAN modules used by the TU Delft.
 
+
 # Compile
- - git submodules init & update
- - Compile message definitions and protocol: DSDLC/generated:  how ??
- - firmware: make
+ - ```git submodule update --init --recursive --force```
+ - ```cd firmware```
+ - Compile message definitions and protocol: DSDLC/generated:  ```make protocol```
+ - firmware: ```make```
 
 
 # Start CAN-UAV (configure CAN Nodes)
@@ -16,7 +18,7 @@ This repository contains the UAVCAN modules used by the TU Delft.
  
 # CAN-tunnel for BLHeli devices
  - reboot devices ?
- - install ```pip3 install git+https://github.com/UAVCAN/pyuavcan@master``` ??
+ - install ```pip3 install git+https://github.com/UAVCAN/pyuavcan@master```
  - or ```pip3 install pyuavcan_v0``` ??
  - ```./tools/test.py```
 
