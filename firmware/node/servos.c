@@ -240,7 +240,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO1_LINE
   int16_t servo1_cmd;
   if(servos.servo1_idx < cnt) {
-    servo1_cmd = 1500+(commands[servos.servo1_idx]*500/8191);
+    servo1_cmd = 1500+(commands[servos.servo1_idx]*1000/8191);
     if(servo1_cmd < 0) servo1_cmd = 0;
   } else {
     servo1_cmd = servos.servo1_failsafe;
@@ -249,7 +249,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO2_LINE
   int16_t servo2_cmd;
   if(servos.servo2_idx < cnt) {
-    servo2_cmd = 1500+(commands[servos.servo2_idx]*500/8191);
+    servo2_cmd = 1500+(commands[servos.servo2_idx]*1000/8191);
     if(servo2_cmd < 0) servo2_cmd = 0;
   } else {
     servo2_cmd = servos.servo2_failsafe;
@@ -258,7 +258,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO3_LINE
   int16_t servo3_cmd;
   if(servos.servo3_idx < cnt) {
-    servo3_cmd = 1500+(commands[servos.servo3_idx]*500/8191);
+    servo3_cmd = 1500+(commands[servos.servo3_idx]*1000/8191);
     if(servo3_cmd < 0) servo3_cmd = 0;
   } else {
     servo3_cmd = servos.servo3_failsafe;
@@ -267,7 +267,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO4_LINE
   int16_t servo4_cmd;
   if(servos.servo4_idx < cnt) {
-    servo4_cmd = 1500+(commands[servos.servo4_idx]*500/8191);
+    servo4_cmd = 1500+(commands[servos.servo4_idx]*1000/8191);
     if(servo4_cmd < 0) servo4_cmd = 0;
   } else {
     servo4_cmd = servos.servo4_failsafe;
@@ -276,7 +276,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO5_LINE
   int16_t servo5_cmd;
   if(servos.servo5_idx < cnt) {
-    servo5_cmd = 1500+(commands[servos.servo5_idx]*500/8191);
+    servo5_cmd = 1500+(commands[servos.servo5_idx]*1000/8191);
     if(servo5_cmd < 0) servo5_cmd = 0;
   } else {
     servo5_cmd = servos.servo5_failsafe;
@@ -285,7 +285,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO6_LINE
   int16_t servo6_cmd;
   if(servos.servo6_idx < cnt) {
-    servo6_cmd = 1500+(commands[servos.servo6_idx]*500/8191);
+    servo6_cmd = 1500+(commands[servos.servo6_idx]*1000/8191);
     if(servo6_cmd < 0) servo6_cmd = 0;
   } else {
     servo6_cmd = servos.servo6_failsafe;
@@ -294,7 +294,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO7_LINE
   int16_t servo7_cmd;
   if(servos.servo7_idx < cnt) {
-    servo7_cmd = 1500+(commands[servos.servo7_idx]*500/8191);
+    servo7_cmd = 1500+(commands[servos.servo7_idx]*1000/8191);
     if(servo7_cmd < 0) servo7_cmd = 0;
   } else {
     servo7_cmd = servos.servo7_failsafe;
@@ -303,7 +303,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO8_LINE
   int16_t servo8_cmd;
   if(servos.servo8_idx < cnt) {
-    servo8_cmd = 1500+(commands[servos.servo8_idx]*500/8191);
+    servo8_cmd = 1500+(commands[servos.servo8_idx]*1000/8191);
     if(servo8_cmd < 0) servo8_cmd = 0;
   } else {
     servo8_cmd = servos.servo8_failsafe;
@@ -312,7 +312,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO9_LINE
   int16_t servo9_cmd;
   if(servos.servo9_idx < cnt) {
-    servo9_cmd = 1500+(commands[servos.servo9_idx]*500/8191);
+    servo9_cmd = 1500+(commands[servos.servo9_idx]*1000/8191);
     if(servo9_cmd < 0) servo9_cmd = 0;
   } else {
     servo9_cmd = servos.servo9_failsafe;
@@ -321,7 +321,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #ifdef SERVO10_LINE
   int16_t servo10_cmd;
   if(servos.servo10_idx < cnt) {
-    servo10_cmd = 1500+(commands[servos.servo10_idx]*500/8191);
+    servo10_cmd = 1500+(commands[servos.servo10_idx]*1000/8191);
     if(servo10_cmd < 0) servo10_cmd = 0;
   } else {
     servo10_cmd = servos.servo10_failsafe;
