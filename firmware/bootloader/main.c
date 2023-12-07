@@ -58,6 +58,10 @@ void jump_to_app(void)
   /*if (app_base[1] >= (APP_START_ADDRESS + board_info.fw_size)) {
       return;
   }*/
+
+  // reset clocks
+  rccDisableAPB1(~0);
+  rccDisableAPB2(~0);
   
   // disable all interrupt sources
   port_disable();

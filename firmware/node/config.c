@@ -9,6 +9,7 @@
 struct config_item_t config_items[] = {
 /* Node configuration */
     {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = 0, .max.i = CANARD_MAX_NODE_ID},
+    {.name = "CAN termination", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
 
 /* Servos configuration */
     {.name = "SERVO failsafe timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
@@ -57,7 +58,7 @@ struct config_item_t config_items[] = {
     {.name = "FAULHABER index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
     {.name = "FAULHABER port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "FAULHABER baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
-    {.name = "FAULHABER telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 1000},
+    {.name = "FAULHABER telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 10000},
     {.name = "FAULHABER node number", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 255},
     {.name = "FAULHABER start timeout (s)", .type = CONFIG_TYPE_INT, .val.i = 5, .def.i = 5, .min.i = 0, .max.i = 1000000},
     {.name = "FAULHABER home method", .type = CONFIG_TYPE_INT, .val.i = 19, .def.i = 19, .min.i = 0, .max.i = 255},
@@ -67,7 +68,7 @@ struct config_item_t config_items[] = {
 
 /* ESC telemetry configuration */
     {.name = "ESC telem index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
-    {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 1000},
+    {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 10000},
     {.name = "ESC telem type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
     {.name = "ESC telem port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "ESC telem pole pairs", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 1, .max.i = 1000},
@@ -80,24 +81,24 @@ struct config_item_t config_items[] = {
 /* TFMini configuration */
     {.name = "TFMINI port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "TFMINI baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
-    {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 1000},
+    {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 10000},
 
 /* POWER ADC's configuration */
 #ifdef ADC_POWER1_MUL
-    {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 1000},
+    {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 10000},
     {.name = "POWER1 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
-    {.name = "POWER1 multiply", .type = CONFIG_TYPE_FLOAT, .val.i = ADC_POWER1_MUL, .def.i = ADC_POWER1_MUL, .min.i = 0, .max.i = 1000000},
+    {.name = "POWER1 multiply", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER1_MUL, .def.f = ADC_POWER1_MUL, .min.f = 0, .max.f = 1000000},
 #endif
 #ifdef ADC_POWER2_MUL
-    {.name = "POWER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 1000},
+    {.name = "POWER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 10000},
     {.name = "POWER2 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
-    {.name = "POWER2 multiply", .type = CONFIG_TYPE_FLOAT, .val.i = ADC_POWER2_MUL, .def.i = ADC_POWER2_MUL, .min.i = 0, .max.i = 1000000},
+    {.name = "POWER2 multiply", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER2_MUL, .def.f = ADC_POWER2_MUL, .min.f = 0, .max.f = 1000000},
 #endif
 
 /* NTC ADC's configuration */
     {.name = "NTC1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
     {.name = "NTC1 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
-    {.name = "NTC1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "NTC1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
     {.name = "NTC1 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
     {.name = "NTC1 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
     {.name = "NTC1 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
@@ -105,7 +106,7 @@ struct config_item_t config_items[] = {
 
     {.name = "NTC2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
     {.name = "NTC2 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
-    {.name = "NTC2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "NTC2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
     {.name = "NTC2 pull up R", .type = CONFIG_TYPE_FLOAT, .val.f = 10000, .def.f = 10000, .min.f = 0, .max.f = 1000000},
     {.name = "NTC2 SH eq a", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00103753243, .def.f = 0.00103753243, .min.f = 0, .max.f = 1000000},
     {.name = "NTC2 SH eq b", .type = CONFIG_TYPE_FLOAT, .val.f = 0.00025150905, .def.f = 0.00025150905, .min.f = 0, .max.f = 1000000},
@@ -114,14 +115,14 @@ struct config_item_t config_items[] = {
 /* POTMETER ADC's configuration */
     {.name = "POTMETER1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
     {.name = "POTMETER1 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
-    {.name = "POTMETER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "POTMETER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
     {.name = "POTMETER1 type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 5},
     {.name = "POTMETER1 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
     {.name = "POTMETER1 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},
 
     {.name = "POTMETER2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
     {.name = "POTMETER2 channel", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = ADC_MAX_CHANNELS-1},
-    {.name = "POTMETER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "POTMETER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
     {.name = "POTMETER2 type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 5},
     {.name = "POTMETER2 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
     {.name = "POTMETER2 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},

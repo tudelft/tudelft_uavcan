@@ -68,7 +68,7 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
     // Try to receive bytes
     size_t recv_size = 300;
     uint8_t buf[300];
-    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(500)) != MSG_RESET) {
+    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(50)) != MSG_RESET) {
         for(uint16_t i = 0; i < recv_size; i++) {
             
             // Received a message
@@ -113,7 +113,7 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
 void drs_parachute_set(enum parachute_status_t status) {
     static systime_t last_cmd = 0;
     // Don't send if initializing or too fast
-    if(drs_parachute.status == DRS_STATUS_INIT || chVTTimeElapsedSinceX(last_cmd) < TIME_MS2I(10))
+    if(drs_parachute.status == DRS_STATUS_INIT || chVTTimeElapsedSinceX(last_cmd) < TIME_MS2I(100))
         return;
 
     // Don't resend arm/disarm

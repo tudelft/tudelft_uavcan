@@ -621,6 +621,23 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
  * Initialization of the CAN driver
  */
 void uavcanInit(void) {
+  // Disable or enable can termination
+  uint8_t can_termination = config_get_by_name("CAN termination", 0)->val.i;
+
+#if defined(CAN1_TERM_LINE) // High is closed
+  if(can_termination & 0x1)
+    palSetLine(CAN1_TERM_LINE);
+  else
+    palClearLine(CAN1_TERM_LINE);
+#endif
+
+#if defined(CAN2_TERM_LINE) // High is open
+  if(can_termination & 0x2)
+    palClearLine(CAN2_TERM_LINE);
+  else
+    palSetLine(CAN2_TERM_LINE);
+#endif
+
   // Activate the interfaces
 #if STM32_CAN_USE_CAN1
 #if defined(CAN1_STBY_LINE)

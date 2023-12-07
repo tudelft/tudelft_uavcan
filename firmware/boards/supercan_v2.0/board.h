@@ -59,6 +59,8 @@
 #define LED1_LINE         PAL_LINE(GPIOC, 6U)
 #define CAN1_STBY_LINE    PAL_LINE(GPIOB, 4U)
 #define CAN2_STBY_LINE    PAL_LINE(GPIOB, 7U)
+#define CAN1_TERM_LINE    PAL_LINE(GPIOB, 13U) // EN2: high is close
+#define CAN2_TERM_LINE    PAL_LINE(GPIOB, 12U) // EN1: high is open
 
 #define SERVO1_LINE       PAL_LINE(GPIOA, 3U)  // TIM5_CH4/TIM2_CH4
 #define SERVO2_LINE       PAL_LINE(GPIOA, 0U)  // TIM5_CH1
@@ -149,21 +151,21 @@
  * PB1  - 8 - Digital input                    (NC)
  * PB2  - 8 - Digital input                    (NC)
  * PB3  - 8 - Digital input                    (NC)
- * PB4  - F - Alternate Open Drain output 50MHz.  (CAN1_STBY)
+ * PB4  - 2 - Push Pull output 2MHz.           (CAN1_STBY)
  * PB5  - 4 - Digital input                    (CAN2_RX)
  * PB6  - B - Alternate Open Drain output 50MHz (CAN2_TX)
- * PB7  - 7 - Open Drain output 50MHz.          (CAN2_STBY)
+ * PB7  - 2 - Push Pull output 2MHz.           (CAN2_STBY)
  * PB8  - 4 - Digital input.                   (CAN1_RX)
  * PB9  - B - Alternate Open Drain output 50MHz.(CAN1_TX)
  * PB10 - 8 -                                  (NC)
  * PB11 - 8 -                                  (NC)
- * PB12 - 8 -                                  (NC)
- * PB13 - 8 -                                  (NC)
+ * PB12 - 2 - Push Pull output 2MHz.           (CANT1)
+ * PB13 - 2 - Push Pull output 2MHz.           (CANT2)
  * PB14 - 8 -                                  (NC)
  * PB15 - 8 -                                  (NC)
  */
-#define VAL_GPIOBCRL            0x7B4B8888      /*  PB7...PB0 */
-#define VAL_GPIOBCRH            0x888888B4      /* PB15...PB8 */
+#define VAL_GPIOBCRL            0x2B428888      /*  PB7...PB0 */
+#define VAL_GPIOBCRH            0x882288B4      /* PB15...PB8 */
 #define VAL_GPIOBODR            0xFFFFFFFF
 
 /*

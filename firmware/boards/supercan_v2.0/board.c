@@ -46,12 +46,18 @@ void __early_init(void) {
  * Board-specific initialization code.
  */
 void boardInit(void) {
-    AFIO->MAPR |= AFIO_MAPR_CAN_REMAP_REMAP2;
-    AFIO->MAPR |= AFIO_MAPR_CAN2_REMAP;
-    AFIO->MAPR |= AFIO_MAPR_TIM2_REMAP_FULLREMAP;
-    
-    AFIO->MAPR &= ~AFIO_MAPR_SWJ_CFG;
-    AFIO->MAPR |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // Enable PA15
+    RCC->APB2ENR |= RCC_APB2ENR_AFIOEN; // Needs to be enabled before remapping
+
+    uint32_t mapr = 0;
+    mapr &= ~AFIO_MAPR_SWJ_CFG;
+    mapr |= AFIO_MAPR_SWJ_CFG_JTAGDISABLE; // Enable PA15 and PB4
+
+    mapr |= AFIO_MAPR_CAN_REMAP_REMAP2;
+    mapr |= AFIO_MAPR_CAN2_REMAP;
+    mapr |= AFIO_MAPR_TIM2_REMAP_FULLREMAP;
+    mapr |= AFIO_MAPR_SPI3_REMAP;
+
+    AFIO->MAPR = mapr;
 }
 
 #if HAL_USE_PWM
