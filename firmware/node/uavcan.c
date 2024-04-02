@@ -49,6 +49,17 @@ static struct uavcan_iface_t can2_iface = {
 #endif
 
 /**
+ * Different briding modes for UAVCAN
+*/
+enum uavcan_bridge_t {
+  UAVCAN_BRIDGE_NONE = 0,   ///< No bridge
+  UAVCAN_BRIDGE_CAN1TOCAN2, ///< Bridge from CAN1 to CAN2
+  UAVCAN_BRIDGE_CAN2TOCAN1  ///< Bridge from CAN2 to CAN1
+};
+
+static enum uavcan_bridge_t uavcan_bridge = UAVCAN_BRIDGE_NONE;
+
+/**
  * Blocking version of the Request or Respons canard sending
  * This will also trigger a Transmit request for the destination interface
  */
@@ -360,55 +371,6 @@ static void handle_allocation_response(struct uavcan_iface_t *iface, CanardRxTra
   }
 }
 
-
-/**
- * This callback is invoked by the library when a new message or request or response is received.
- */
-static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
-{
-  struct uavcan_iface_t *iface = (struct uavcan_iface_t *)ins->user_reference;
-
-  /*
-   * Dynamic node ID allocation protocol.
-   * Taking this branch only if we don't have a node ID, ignoring otherwise.
-   */
-  if ((canardGetLocalNodeID(ins) == CANARD_BROADCAST_NODE_ID) &&
-    (transfer->transfer_type == CanardTransferTypeBroadcast) &&
-    (transfer->data_type_id == UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID))
-  {
-    handle_allocation_response(iface, transfer);
-    return;
-  }
-
-  switch (transfer->data_type_id) {
-    case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
-      handle_esc_rawcommand(iface, transfer);
-      break;
-    case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
-      handle_param_getset(iface, transfer);
-      break;
-    case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
-      handle_param_execute_opcode(iface, transfer);
-      break;
-    case UAVCAN_TUNNEL_CALL_ID:
-      //handle_tunnel_call(iface, transfer);
-      break;
-
-    case UAVCAN_PROTOCOL_GETNODEINFO_ID:
-      handle_get_node_info(iface, transfer);
-      break;
-    case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
-      servos_disable();
-      *((uint32_t *)0x20004FF0) = 0xDEADBEEF;
-      NVIC_SystemReset();
-      break;
-    case UAVCAN_PROTOCOL_RESTARTNODE_ID:
-      servos_disable();
-      NVIC_SystemReset();
-      break;
-  }
-}
-
 /**
  * This callback is invoked by the library when it detects beginning of a new transfer on the bus that can be received
  * by the local node.
@@ -440,8 +402,20 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
 
 
   switch (data_type_id) {
+    case UAVCAN_PROTOCOL_NODESTATUS_ID:
+      *out_data_type_signature = UAVCAN_PROTOCOL_NODESTATUS_SIGNATURE;
+      return true;
+    case UAVCAN_EQUIPMENT_ESC_STATUS_ID:
+      *out_data_type_signature = UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE;
+      return true;
+    case UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID:
+      *out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE;
+      return true;
     case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
       *out_data_type_signature = UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_SIGNATURE;
+      return true;
+    case UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID:
+      *out_data_type_signature = UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_SIGNATURE;
       return true;
     case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_PARAM_GETSET_SIGNATURE;
@@ -466,6 +440,121 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
   
 
   return false;
+}
+
+/**
+ * This callback is invoked by the library when a new message or request or response is received.
+ */
+static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
+{
+  struct uavcan_iface_t *iface = (struct uavcan_iface_t *)ins->user_reference;
+
+  /*
+   * Dynamic node ID allocation protocol.
+   * Taking this branch only if we don't have a node ID, ignoring otherwise.
+   */
+  if ((canardGetLocalNodeID(ins) == CANARD_BROADCAST_NODE_ID) &&
+    (transfer->transfer_type == CanardTransferTypeBroadcast) &&
+    (transfer->data_type_id == UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_ID))
+  {
+    handle_allocation_response(iface, transfer);
+    return;
+  }
+
+  // First handle the packages internally
+  switch (transfer->data_type_id) {
+    case UAVCAN_EQUIPMENT_ESC_RAWCOMMAND_ID:
+      handle_esc_rawcommand(iface, transfer);
+      break;
+    case UAVCAN_PROTOCOL_PARAM_GETSET_ID:
+      handle_param_getset(iface, transfer);
+      break;
+    case UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_ID:
+      handle_param_execute_opcode(iface, transfer);
+      break;
+    case UAVCAN_TUNNEL_CALL_ID:
+      //handle_tunnel_call(iface, transfer);
+      break;
+
+    case UAVCAN_PROTOCOL_GETNODEINFO_ID:
+      handle_get_node_info(iface, transfer);
+      break;
+    case UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_ID:
+      servos_disable();
+      *((uint32_t *)0x20004FF0) = 0xDEADBEEF;
+      NVIC_SystemReset();
+      break;
+    case UAVCAN_PROTOCOL_RESTARTNODE_ID:
+      servos_disable();
+      NVIC_SystemReset();
+      break;
+  }
+
+  // Forward if needed
+#if defined(STM32_CAN_USE_CAN1) && defined(STM32_CAN_USE_CAN2)
+  struct uavcan_iface_t *main_iface = NULL;
+  struct uavcan_iface_t *other_iface = NULL;
+
+  // Set the correct bridge
+  if(uavcan_bridge == UAVCAN_BRIDGE_CAN1TOCAN2) {
+    main_iface = &can1_iface;
+    other_iface = &can2_iface;
+  } else if(uavcan_bridge == UAVCAN_BRIDGE_CAN2TOCAN1) {
+    main_iface = &can2_iface;
+    other_iface = &can1_iface;
+  } else {
+    return;
+  }
+
+  // Get the signature and verify broadcast
+  uint64_t data_type_signature;
+  if(!shouldAcceptTransfer(&can1_iface.canard, &data_type_signature, transfer->data_type_id, transfer->transfer_type, transfer->source_node_id))
+    return;
+  if(transfer->transfer_type != CanardTransferTypeBroadcast)
+    return;
+
+  // Weird payload handling
+  uint8_t tx_payload[transfer->payload_len];
+  memcpy(tx_payload, transfer->payload_head, CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE);
+  uint8_t offset = CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
+  uint16_t remaining = transfer->payload_len - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
+  CanardBufferBlock* block = transfer->payload_middle;
+  while(block) {
+    uint8_t bsize = (remaining < CANARD_BUFFER_BLOCK_DATA_SIZE) ? remaining : CANARD_BUFFER_BLOCK_DATA_SIZE;
+    memcpy(&tx_payload[offset], block->data, bsize);
+    offset += CANARD_BUFFER_BLOCK_DATA_SIZE;
+    remaining -= CANARD_BUFFER_BLOCK_DATA_SIZE;
+    block = block->next;
+  }
+  if(transfer->payload_tail && remaining > 0) {
+    memcpy(&tx_payload[offset], transfer->payload_tail, remaining);
+  }
+
+  // Trafic from Main -> Sub    (UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_ID)
+  if(iface == main_iface && 
+      (transfer->data_type_id == UAVCAN_EQUIPMENT_ACTUATOR_ARRAYCOMMAND_ID
+      || transfer->data_type_id == UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_ID)) {
+    uavcanBroadcast(other_iface,
+                    data_type_signature,
+                    transfer->data_type_id,
+                    &transfer->transfer_id,
+                    transfer->priority,
+                    tx_payload,
+                    transfer->payload_len);
+  } 
+  // Trafic from Sub -> Main     (UAVCAN_PROTOCOL_NODESTATUS_ID, UAVCAN_PROTOCOL_GETNODEINFO_RESPONSE_ID)
+  else if(iface == other_iface && 
+      (transfer->data_type_id == UAVCAN_EQUIPMENT_ESC_STATUS_ID
+      || transfer->data_type_id == UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID)) {
+    uavcanBroadcast(main_iface,
+                    data_type_signature,
+                    transfer->data_type_id,
+                    &transfer->transfer_id,
+                    transfer->priority,
+                    tx_payload,
+                    transfer->payload_len);
+  }
+#endif
 }
 
 /**
@@ -614,8 +703,9 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
  * Initialization of the CAN driver
  */
 void uavcanInit(void) {
-  // Disable or enable can termination
+  // Get the configuration variables
   uint8_t can_termination = config_get_by_name("CAN termination", 0)->val.i;
+  uavcan_bridge = config_get_by_name("CAN bridge", 0)->val.i;
 
 #if defined(CAN1_TERM_LINE) // High is closed
   if(can_termination & 0x1)
