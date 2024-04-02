@@ -184,7 +184,7 @@ static THD_FUNCTION(ntc_thread, p) {
     float temp = 1 / (ntc->she_a + (ntc->she_b * log_r) + (ntc->she_c * log_r * log_r * log_r));
 
     // Set the values
-    uavcan_equipment_device_Temperature deviceTemperature;
+    struct uavcan_equipment_device_Temperature deviceTemperature;
     deviceTemperature.device_id = ntc->device_id;
     deviceTemperature.temperature = temp;
 
@@ -214,7 +214,7 @@ static THD_FUNCTION(potmeter_thread, p) {
     float scaled_value = (raw_adc - potmeter->cal_a) * potmeter->cal_b;
 
     // Set the values
-    uavcan_equipment_actuator_Status actuatorStatus;
+    struct uavcan_equipment_actuator_Status actuatorStatus;
     actuatorStatus.actuator_id = potmeter->device_id;
     actuatorStatus.position = scaled_value;
     actuatorStatus.force = raw_adc; // For debugging

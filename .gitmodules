@@ -3,10 +3,16 @@
 	url = https://github.com/ChibiOS/ChibiOS
 [submodule "firmware/lib/canard"]
 	path = firmware/lib/canard
-	url = https://github.com/UAVCAN/libcanard.git
+	url = https://github.com/DroneCAN/libcanard
 [submodule "firmware/lib/public_regulated_data_types"]
 	path = firmware/lib/public_regulated_data_types
 	url = https://github.com/UAVCAN/public_regulated_data_types.git
 [submodule "firmware/lib/mavlink"]
 	path = firmware/lib/mavlink
 	url = git@github.com:mavlink/c_library_v2.git
+[submodule "firmware/lib/DSDL"]
+	path = firmware/lib/DSDL
+	url = https://github.com/DroneCAN/DSDL
+[submodule "firmware/lib/dronecan_dsdlc"]
+	path = firmware/lib/dronecan_dsdlc
+	url = https://github.com/DroneCAN/dronecan_dsdlc

@@ -275,11 +275,11 @@ static THD_FUNCTION(uavcan_thrd, p) {
     }
 
     // Obtaining the local unique ID
-    uint8_t my_unique_id[UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH] = {0};
+    uint8_t my_unique_id[16] = {0};
     memcpy(my_unique_id, (void *)UID_BASE, 12);
 
     static const uint8_t MaxLenOfUniqueIDInRequest = 6;
-    uint8_t uid_size = (uint8_t)(UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH - iface->node_id_allocation_unique_id_offset);
+    uint8_t uid_size = (uint8_t)(16 - iface->node_id_allocation_unique_id_offset);
     if (uid_size > MaxLenOfUniqueIDInRequest)
     {
       uid_size = MaxLenOfUniqueIDInRequest;
@@ -330,39 +330,32 @@ static void handle_allocation_response(struct uavcan_iface_t *iface, CanardRxTra
   }
 
   // Copying the unique ID from the message
-  static const uint8_t UniqueIDBitOffset = 8;
-  uint8_t received_unique_id[UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH];
-  uint8_t received_unique_id_len = 0;
-  for (; received_unique_id_len < (transfer->payload_len - (UniqueIDBitOffset / 8U)); received_unique_id_len++) {
-    //assert(received_unique_id_len < UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH);
-    const uint8_t bit_offset = (uint8_t)(UniqueIDBitOffset + received_unique_id_len * 8U);
-    (void) canardDecodeScalar(transfer, bit_offset, 8, false, &received_unique_id[received_unique_id_len]);
+  struct uavcan_protocol_dynamic_node_id_Allocation msg;
+  if (uavcan_protocol_dynamic_node_id_Allocation_decode(transfer, &msg)) {
+    /* bad packet */
+    return;
   }
 
   // Obtaining the local unique ID
-  uint8_t my_unique_id[UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH] = {0};
+  uint8_t my_unique_id[16] = {0};
   memcpy(my_unique_id, (void *)UID_BASE, 12);
 
   // Matching the received UID against the local one
-  if (memcmp(received_unique_id, my_unique_id, received_unique_id_len) != 0) {
+  if (memcmp(msg.unique_id.data, my_unique_id, msg.unique_id.len) != 0) {
     //printf("Mismatching allocation response\n");
     iface->node_id_allocation_unique_id_offset = 0;
     return;         // No match, return
   }
 
-  if (received_unique_id_len < UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_UNIQUE_ID_MAX_LENGTH) {
+  if (msg.unique_id.len < sizeof(msg.unique_id.data)) {
     // The allocator has confirmed part of unique ID, switching to the next stage and updating the timeout.
-    iface->node_id_allocation_unique_id_offset = received_unique_id_len;
+    iface->node_id_allocation_unique_id_offset = msg.unique_id.len;
     iface->send_next_node_id_allocation_request_at_ms -= UAVCAN_PROTOCOL_DYNAMIC_NODE_ID_ALLOCATION_MIN_REQUEST_PERIOD_MS;
 
     //printf("Matching allocation response: %d\n", received_unique_id_len);
   } else {
     // Allocation complete - copying the allocated node ID from the message
-    uint8_t allocated_node_id = 0;
-    (void) canardDecodeScalar(transfer, 0, 7, false, &allocated_node_id);
-    //assert(allocated_node_id <= 127);
-
-    canardSetLocalNodeID(&iface->canard, allocated_node_id);
+    canardSetLocalNodeID(&iface->canard, msg.node_id);
     //printf("Node ID allocated: %d\n", allocated_node_id);
   }
 }

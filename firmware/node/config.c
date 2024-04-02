@@ -10,6 +10,7 @@ struct config_item_t config_items[] = {
 /* Node configuration */
     {.name = "NODE id", .type = CONFIG_TYPE_INT, .val.i = CANARD_BROADCAST_NODE_ID, .def.i = CANARD_BROADCAST_NODE_ID, .min.i = 0, .max.i = CANARD_MAX_NODE_ID},
     {.name = "CAN termination", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
+    {.name = "BRIDGE mode", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
 
 /* Servos configuration */
     {.name = "SERVO failsafe timeout (ms)", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = 20000},
@@ -204,8 +205,8 @@ struct config_item_t *config_get_by_name(char* name, uint8_t len) {
     return NULL;
 }
 
-static void config_set_resp(struct config_item_t *item, uavcan_protocol_param_GetSetResponse *resp) {
-    resp->name.data = (uint8_t *)item->name;
+static void config_set_resp(struct config_item_t *item, struct uavcan_protocol_param_GetSetResponse *resp) {
+    memcpy(resp->name.data, item->name, strlen(item->name));
     resp->name.len = strlen(item->name);
 
     switch(item->type) {
@@ -241,10 +242,10 @@ static void config_set_resp(struct config_item_t *item, uavcan_protocol_param_Ge
             break;
         case CONFIG_TYPE_STRING:
             resp->value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_STRING_VALUE;
-            resp->value.string_value.data = (uint8_t *)item->val.s;
+            memcpy(resp->value.string_value.data, item->val.s, strlen(item->val.s));
             resp->value.string_value.len = (uint8_t)strlen(item->val.s);
             resp->default_value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_STRING_VALUE;
-            resp->default_value.string_value.data = (uint8_t *)item->def.s;
+            memcpy(resp->default_value.string_value.data, item->def.s, strlen(item->def.s));
             resp->default_value.string_value.len = (uint8_t)strlen(item->def.s);
             break;
     }
@@ -261,13 +262,11 @@ static void config_set_resp(struct config_item_t *item, uavcan_protocol_param_Ge
 void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfer)
 {
     uint8_t buffer[UAVCAN_PROTOCOL_PARAM_GETSET_RESPONSE_MAX_SIZE];
-    uavcan_protocol_param_GetSetResponse resp = {0};
-    uavcan_protocol_param_GetSetRequest req = {0};
+    struct uavcan_protocol_param_GetSetResponse resp = {0};
+    struct uavcan_protocol_param_GetSetRequest req = {0};
 
     // Decode the incoming request
-    uint8_t dyn_arr_buff[UAVCAN_PROTOCOL_PARAM_GETSET_RESPONSE_NAME_MAX_LENGTH+1];
-    uint8_t *dyn1 = dyn_arr_buff;
-	if(uavcan_protocol_param_GetSetRequest_decode(transfer, transfer->payload_len, &req, &dyn1) < 0)
+	if(uavcan_protocol_param_GetSetRequest_decode(transfer, &req))
         return;
     
     // Get the correct config item
@@ -302,9 +301,8 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
     }
     // The config item was not found
     else {
-        uint8_t name[1];
         resp.value.union_tag = UAVCAN_PROTOCOL_PARAM_VALUE_EMPTY;
-        resp.name.data = name;
+        memset(resp.name.data, 0, 1);
         resp.name.len = 0;
     }
 
@@ -324,10 +322,10 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
 
 void handle_param_execute_opcode(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
     uint8_t buffer[UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_RESPONSE_MAX_SIZE];
-    uavcan_protocol_param_ExecuteOpcodeResponse resp = {0};
-    uavcan_protocol_param_ExecuteOpcodeRequest req = {0};
+    struct uavcan_protocol_param_ExecuteOpcodeResponse resp = {0};
+    struct uavcan_protocol_param_ExecuteOpcodeRequest req = {0};
 
-    if(uavcan_protocol_param_ExecuteOpcodeRequest_decode(transfer, transfer->payload_len, &req, NULL) < 0)
+    if(uavcan_protocol_param_ExecuteOpcodeRequest_decode(transfer, &req))
         return;
 
     resp.ok = false;

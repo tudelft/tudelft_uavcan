@@ -6,22 +6,22 @@
 #include <canard.h>
 
 // UAVCAN messages
-#include <uavcan/protocol/GetNodeInfo.h>
-#include <uavcan/protocol/NodeStatus.h>
-#include <uavcan/protocol/RestartNode.h>
-#include <uavcan/protocol/dynamic_node_id/Allocation.h>
-#include <uavcan/protocol/debug/LogMessage.h>
-#include <uavcan/protocol/file/BeginFirmwareUpdate.h>
-#include <uavcan/protocol/file/Read.h>
-#include <uavcan/equipment/esc/RawCommand.h>
-#include <uavcan/equipment/esc/Status.h>
-#include <uavcan/equipment/device/Temperature.h>
-#include <uavcan/equipment/actuator/Status.h>
-#include <uavcan/equipment/range_sensor/Measurement.h>
-#include <uavcan/protocol/param/GetSet.h>
-#include <uavcan/protocol/param/ExecuteOpcode.h>
-#include <uavcan/protocol/param/ExecuteOpcode.h>
-#include <uavcan/tunnel/Call.h>
+#include <uavcan.protocol.GetNodeInfo.h>
+#include <uavcan.protocol.NodeStatus.h>
+#include <uavcan.protocol.RestartNode.h>
+#include <uavcan.protocol.dynamic_node_id.Allocation.h>
+#include <uavcan.protocol.debug.LogMessage.h>
+#include <uavcan.protocol.file.BeginFirmwareUpdate.h>
+#include <uavcan.protocol.file.Read.h>
+#include <uavcan.equipment.esc.RawCommand.h>
+#include <uavcan.equipment.esc.Status.h>
+#include <uavcan.equipment.device.Temperature.h>
+#include <uavcan.equipment.actuator.Status.h>
+#include <uavcan.equipment.range_sensor.Measurement.h>
+#include <uavcan.protocol.param.GetSet.h>
+#include <uavcan.protocol.param.ExecuteOpcode.h>
+#include <uavcan.protocol.param.ExecuteOpcode.h>
+#include <uavcan.tunnel.Call.h>
 
 
 struct uavcan_iface_t {

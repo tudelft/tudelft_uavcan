@@ -6,13 +6,13 @@
 #include <canard.h>
 
 // UAVCAN messages
-#include <uavcan/protocol/GetNodeInfo.h>
-#include <uavcan/protocol/NodeStatus.h>
-#include <uavcan/protocol/RestartNode.h>
-#include <uavcan/protocol/dynamic_node_id/Allocation.h>
-#include <uavcan/protocol/debug/LogMessage.h>
-#include <uavcan/protocol/file/BeginFirmwareUpdate.h>
-#include <uavcan/protocol/file/Read.h>
+#include <uavcan.protocol.GetNodeInfo.h>
+#include <uavcan.protocol.NodeStatus.h>
+#include <uavcan.protocol.RestartNode.h>
+#include <uavcan.protocol.dynamic_node_id.Allocation.h>
+#include <uavcan.protocol.debug.LogMessage.h>
+#include <uavcan.protocol.file.BeginFirmwareUpdate.h>
+#include <uavcan.protocol.file.Read.h>
 
 
 struct uavcan_iface_t {

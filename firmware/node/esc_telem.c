@@ -30,7 +30,7 @@ static THD_FUNCTION(esc_telem_thd, arg) {
 
 static void esc_telem_broadcast_status(void) {
   // Set the values
-  uavcan_equipment_esc_Status escStatus;
+  struct uavcan_equipment_esc_Status escStatus;
   escStatus.error_count = esc_telem.data.timeout_cnt;
   escStatus.voltage = esc_telem.data.voltage;
   escStatus.current = esc_telem.data.current;

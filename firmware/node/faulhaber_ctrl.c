@@ -173,7 +173,7 @@ static THD_FUNCTION(faulhaber_ctrl_tx_thd, arg) {
 static void faulhaber_ctrl_broadcast_status(void) {
   // Set the values
   int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos);
-  uavcan_equipment_actuator_Status actuatorStatus;
+  struct uavcan_equipment_actuator_Status actuatorStatus;
   actuatorStatus.actuator_id = faulhaber_ctrl.index;
   actuatorStatus.position = (double)faulhaber_ctrl.actual_position / (double)range * M_PI_2;
 

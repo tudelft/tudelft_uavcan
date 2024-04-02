@@ -65,7 +65,7 @@ static void tfmini_parse(uint8_t byte)
         //float temp = tfmini.raw_temp * 10.f / 8.f - 256.f;
 
         // Set the values
-        uavcan_equipment_range_sensor_Measurement measurement;
+        struct uavcan_equipment_range_sensor_Measurement measurement;
         measurement.timestamp.usec = TIME_I2US(chVTGetSystemTimeX());
         measurement.sensor_id = 0;
         measurement.beam_orientation_in_body_frame.fixed_axis_roll_pitch_yaw[0] = 0;

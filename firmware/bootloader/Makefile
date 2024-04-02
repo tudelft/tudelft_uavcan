@@ -121,6 +121,7 @@ BUILDDIR := ../build/$(BOARD)/bl
 DEPDIR   := ./.dep
 CANARDDIR  := ../lib/canard
 DSDLC_DIR  := ../lib/dsdlc_generated
+DSDLC_SRC_DIR  := $(DSDLC_DIR)/src
 
 # Board files.
 include $(BOARDDIR)/$(BOARD)/board.mk
@@ -147,15 +148,19 @@ LDSCRIPT= $(BOARDDIR)/$(BOARD)/bl.ld
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
 	     $(CANARDDIR)/canard.c \
-       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogLevel.c \
-       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogMessage.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_GetNodeInfo.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_NodeStatus.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_SoftwareVersion.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_HardwareVersion.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_BeginFirmwareUpdate.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_Path.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_Read.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.dynamic_node_id.Allocation.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.debug.LogLevel.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.debug.LogMessage.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.GetNodeInfo_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.GetNodeInfo_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.NodeStatus.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.SoftwareVersion.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.HardwareVersion.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Path.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_res.c \
 	     flash.c uavcan.c node.c firmware_update.c \
        main.c
 
@@ -187,7 +192,7 @@ TCPPSRC =
 ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR)/include
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

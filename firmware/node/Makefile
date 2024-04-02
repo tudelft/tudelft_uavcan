@@ -121,6 +121,7 @@ BUILDDIR := ../build/$(BOARD)/node
 DEPDIR   := ./.dep
 CANARDDIR  := ../lib/canard
 DSDLC_DIR  := ../lib/dsdlc_generated
+DSDLC_SRC_DIR  := $(DSDLC_DIR)/src
 MAVLINK_DIR := ../lib/mavlink
 
 # Board files.
@@ -146,29 +147,37 @@ LDSCRIPT= $(BOARDDIR)/$(BOARD)/node.ld
 CSRC = $(ALLCSRC) \
        $(TESTSRC) \
 	     $(CANARDDIR)/canard.c \
-       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogLevel.c \
-       $(DSDLC_DIR)/uavcan/protocol/debug/debug_LogMessage.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_GetNodeInfo.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_NodeStatus.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_SoftwareVersion.c \
-       $(DSDLC_DIR)/uavcan/protocol/protocol_HardwareVersion.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_BeginFirmwareUpdate.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_Path.c \
-       $(DSDLC_DIR)/uavcan/protocol/file/file_Read.c \
-       $(DSDLC_DIR)/uavcan/protocol/param/param_GetSet.c \
-       $(DSDLC_DIR)/uavcan/protocol/param/param_Value.c \
-       $(DSDLC_DIR)/uavcan/protocol/param/param_Empty.c \
-       $(DSDLC_DIR)/uavcan/protocol/param/param_NumericValue.c \
-       $(DSDLC_DIR)/uavcan/protocol/param/param_ExecuteOpcode.c \
-       $(DSDLC_DIR)/uavcan/protocol/tunnel/tunnel_Broadcast.c \
-       $(DSDLC_DIR)/uavcan/tunnel/tunnel_Call.c \
-       $(DSDLC_DIR)/uavcan/tunnel/tunnel_Protocol.c \
-       $(DSDLC_DIR)/uavcan/uavcan_Timestamp.c \
-       $(DSDLC_DIR)/uavcan/uavcan_CoarseOrientation.c \
-       $(DSDLC_DIR)/uavcan/equipment/esc/esc_Status.c \
-       $(DSDLC_DIR)/uavcan/equipment/device/device_Temperature.c \
-       $(DSDLC_DIR)/uavcan/equipment/actuator/actuator_Status.c \
-       $(DSDLC_DIR)/uavcan/equipment/range_sensor/range_sensor_Measurement.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.dynamic_node_id.Allocation.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.debug.LogLevel.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.debug.LogMessage.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.GetNodeInfo_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.GetNodeInfo_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.NodeStatus.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.SoftwareVersion.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.HardwareVersion.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Path.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.GetSet_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.GetSet_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.Value.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.Empty.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.NumericValue.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.ExecuteOpcode_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.param.ExecuteOpcode_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.tunnel.Broadcast.c \
+       $(DSDLC_SRC_DIR)/uavcan.tunnel.Call_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.tunnel.Call_res.c \
+       $(DSDLC_SRC_DIR)/uavcan.tunnel.Protocol.c \
+       $(DSDLC_SRC_DIR)/uavcan.Timestamp.c \
+       $(DSDLC_SRC_DIR)/uavcan.CoarseOrientation.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.esc.Status.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.esc.RawCommand.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.device.Temperature.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.actuator.Status.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.range_sensor.Measurement.c \
 	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
        faulhaber_ctrl.c drs_parachute.c tfmini.c \
        main.c
@@ -201,7 +210,7 @@ TCPPSRC =
 ASMSRC = $(ALLASMSRC)
 ASMXSRC = $(ALLXASMSRC)
 
-INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR) $(MAVLINK_DIR)
+INCDIR = $(CONFDIR) $(ALLINC) $(TESTINC) $(CANARDDIR) $(DSDLC_DIR)/include $(MAVLINK_DIR)
 
 # Define C warning options here.
 CWARN = -Wall -Wextra -Wundef -Wstrict-prototypes

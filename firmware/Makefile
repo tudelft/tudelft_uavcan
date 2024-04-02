@@ -13,10 +13,12 @@ bootloader:
 
 node:
 	make -C node BOARD=$(BOARD)
+
+python_req:
+	pip install empy==3.3.4 pexpect
 	
 protocol:
-	cd ./lib/canard/dsdl_compiler/ && python3 libcanard_dsdlc --outdir ../../dsdlc_generated ../../public_regulated_data_types/uavcan
-
+	cd ./lib/ && python3 dronecan_dsdlc/dronecan_dsdlc.py -O dsdlc_generated DSDL/dronecan DSDL/uavcan DSDL/com DSDL/ardupilot
 
 %.upload:
 	@echo "Using Black Magic Probe with SWD on BMP_PORT $(BMP_PORT)"

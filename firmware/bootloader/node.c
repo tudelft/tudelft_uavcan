@@ -48,7 +48,7 @@ void broadcast_node_status(struct uavcan_iface_t *iface) {
 void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transfer)
 {
     uint8_t buffer[UAVCAN_PROTOCOL_GETNODEINFO_RESPONSE_MAX_SIZE];
-    uavcan_protocol_GetNodeInfoResponse pkt = {0};
+    struct uavcan_protocol_GetNodeInfoResponse pkt = {0};
 
     pkt.software_version.major = SOFT_VER_MAJOR;
     pkt.software_version.minor = SOFT_VER_MINOR;
@@ -59,10 +59,9 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     pkt.hardware_version.minor = 0;
     memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
-    char name[strlen("SUPERCAN BOOTLOADER") + 1];
-    strcpy(name, "SUPERCAN BOOTLOADER");
-    pkt.name.len = strlen("SUPERCAN BOOTLOADER");
-    pkt.name.data = (uint8_t *)name;
+    pkt.name.len = strlen(BOARD_NAME) + 3;
+    strcpy((char *)pkt.name.data, "BL ");
+    strcat((char *)pkt.name.data, BOARD_NAME);
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);
     uavcanRequestOrRespond(iface,

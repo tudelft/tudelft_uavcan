@@ -10,11 +10,9 @@ struct firmware_update_t firmware_update;
 /* Handle a firmware update request */
 void handle_begin_firmware_update(struct uavcan_iface_t *iface, CanardRxTransfer* transfer) {
   uint8_t buffer[UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_MAX_SIZE];
-  uint8_t err_msg[UAVCAN_PROTOCOL_FILE_BEGINFIRMWAREUPDATE_RESPONSE_OPTIONAL_ERROR_MESSAGE_MAX_LENGTH];
-  uavcan_protocol_file_BeginFirmwareUpdateResponse resp = {0};
+  struct uavcan_protocol_file_BeginFirmwareUpdateResponse resp = {0};
   resp.error = 0;
   resp.optional_error_message.len = 0;
-  resp.optional_error_message.data = err_msg;
 
   // Check if we are already in progress of updating the firmware
   if(firmware_update.in_progress) {
@@ -128,7 +126,7 @@ void handle_file_read_response(struct uavcan_iface_t *iface __attribute__((unuse
 
     firmware_update.file_offset += len;
     
-    if (len < UAVCAN_PROTOCOL_FILE_READ_RESPONSE_DATA_MAX_LENGTH) {
+    if (len < 256) {
       firmware_update.in_progress = false;
       firmware_update.node_id = 0;
       // now flash the first word
