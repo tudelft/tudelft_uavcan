@@ -11,7 +11,7 @@ struct drs_parachute_t drs_parachute;
 static void mavlink_send(mavlink_message_t *msg) {
     uint8_t buf[300];
     size_t len = mavlink_msg_to_send_buffer(buf, msg);
-    uartSendFullTimeout(drs_parachute.port, &len, (void *)buf, TIME_MS2I(20));
+    uartSendFullTimeout(drs_parachute.port, &len, (void *)buf, TIME_MS2I(40));
 }
 
 /* Send heartbeat */
@@ -52,7 +52,7 @@ static void mavlink_send_cmd_parachute(uint8_t action) {
     mavlink_send(&message);
 }
 
-static THD_WORKING_AREA(drs_parachute_wa, 2048);
+static THD_WORKING_AREA(drs_parachute_wa, 3072);
 static THD_FUNCTION(drs_parachute_thd, arg) {
   (void)arg;
   chRegSetThreadName("drs_parachute");
@@ -60,17 +60,19 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
   mavlink_status_t status;
 
   // Wait for bootup
-  systime_t other_msg_time = chVTGetSystemTimeX();
-
+  systime_t last_heartbeat = 0;
   while (true) {
-    mavlink_send_heartbeat();
+    // Send heartbeat every 500ms
+    if(chVTTimeElapsedSinceX(last_heartbeat) > TIME_MS2I(500)) {
+        mavlink_send_heartbeat();
+        last_heartbeat = chVTGetSystemTimeX();
+    }
     
     // Try to receive bytes
-    size_t recv_size = 300;
-    uint8_t buf[300];
-    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(50)) != MSG_RESET) {
+    size_t recv_size = 50;
+    uint8_t buf[50];
+    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(10)) != MSG_RESET) {
         for(uint16_t i = 0; i < recv_size; i++) {
-            
             // Received a message
             if(mavlink_parse_char(MAVLINK_COMM_1, buf[i], &message, &status)) {
                 switch(message.msgid) {
@@ -83,13 +85,12 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
                             mavlink_send_autopilot_version();
                             chThdSleepMilliseconds(100);
                         }
-                        other_msg_time = chVTGetSystemTimeX();
                         break;
                     }
                     case MAVLINK_MSG_ID_HEARTBEAT:
                     {
                         static uint16_t heartbeat_cnt = 0;
-                        if(drs_parachute.status == DRS_STATUS_INIT && chVTTimeElapsedSinceX(other_msg_time) > TIME_S2I(5) && heartbeat_cnt > 5) {
+                        if(drs_parachute.status == DRS_STATUS_INIT && heartbeat_cnt > 3) {
                             mavlink_send_cmd_parachute(PARACHUTE_DISABLE);
                             drs_parachute.status = DRS_STATUS_DISABLE;
                             chThdSleepMilliseconds(100);
@@ -98,14 +99,12 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
                         break;
                     }
                     default:
-                        other_msg_time = chVTGetSystemTimeX();
                         break;
                 }
             }
 
         }
     }
-
   }
 }
 
@@ -173,6 +172,6 @@ void drs_parachute_init(void) {
     // Open the telemetry port and start the thread
     if(drs_parachute.port != NULL) {
         uartStart(drs_parachute.port, &uart_cfg);
-        chThdCreateStatic(drs_parachute_wa, sizeof(drs_parachute_wa), NORMALPRIO+40, drs_parachute_thd, NULL);
+        chThdCreateStatic(drs_parachute_wa, sizeof(drs_parachute_wa), NORMALPRIO+3, drs_parachute_thd, NULL);
     }
 }
