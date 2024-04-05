@@ -508,7 +508,7 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
 
   // Get the signature and verify broadcast
   uint64_t data_type_signature;
-  if(!shouldAcceptTransfer(&can1_iface.canard, &data_type_signature, transfer->data_type_id, transfer->transfer_type, transfer->source_node_id))
+  if(!shouldAcceptTransfer(&iface->canard, &data_type_signature, transfer->data_type_id, transfer->transfer_type, transfer->source_node_id))
     return;
   if(transfer->transfer_type != CanardTransferTypeBroadcast)
     return;
@@ -516,11 +516,11 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
   // Weird payload handling
   uint8_t tx_payload[transfer->payload_len];
   memcpy(tx_payload, transfer->payload_head, CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE);
-  uint8_t offset = CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
-  uint16_t remaining = transfer->payload_len - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
+  uint16_t offset = CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
+  int32_t remaining = transfer->payload_len - CANARD_MULTIFRAME_RX_PAYLOAD_HEAD_SIZE;
   CanardBufferBlock* block = transfer->payload_middle;
-  while(block) {
-    uint8_t bsize = (remaining < CANARD_BUFFER_BLOCK_DATA_SIZE) ? remaining : CANARD_BUFFER_BLOCK_DATA_SIZE;
+  while(block && remaining > 0) {
+    size_t bsize = (remaining < (int32_t)CANARD_BUFFER_BLOCK_DATA_SIZE) ? remaining : (int32_t)CANARD_BUFFER_BLOCK_DATA_SIZE;
     memcpy(&tx_payload[offset], block->data, bsize);
     offset += CANARD_BUFFER_BLOCK_DATA_SIZE;
     remaining -= CANARD_BUFFER_BLOCK_DATA_SIZE;
@@ -529,6 +529,9 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
   if(transfer->payload_tail && remaining > 0) {
     memcpy(&tx_payload[offset], transfer->payload_tail, remaining);
   }
+
+  // Since buffer is copied we can unlock to prevent deadlock
+  chMtxUnlock(&iface->mutex);
 
   // Trafic from Main -> Sub    (UAVCAN_PROTOCOL_GETNODEINFO_REQUEST_ID)
   if(iface == main_iface && 
@@ -554,6 +557,9 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
                     tx_payload,
                     transfer->payload_len);
   }
+
+  // We need to lock again to prevent double unlock
+  chMtxLock(&iface->mutex);
 #endif
 }
 
