@@ -14,42 +14,52 @@ struct servos_t {
 #ifdef SERVO1_LINE
   uint8_t servo1_idx;
   uint16_t servo1_failsafe;
+  bool servo1_tmotor;
 #endif
 #ifdef SERVO2_LINE
   uint8_t servo2_idx;
   uint16_t servo2_failsafe;
+  bool servo2_tmotor;
 #endif
 #ifdef SERVO3_LINE
   uint8_t servo3_idx;
   uint16_t servo3_failsafe;
+  bool servo3_tmotor;
 #endif
 #ifdef SERVO4_LINE
   uint8_t servo4_idx;
   uint16_t servo4_failsafe;
+  bool servo4_tmotor;
 #endif
 #ifdef SERVO5_LINE
   uint8_t servo5_idx;
   uint16_t servo5_failsafe;
+  bool servo5_tmotor;
 #endif
 #ifdef SERVO6_LINE
   uint8_t servo6_idx;
   uint16_t servo6_failsafe;
+  bool servo6_tmotor;
 #endif
 #ifdef SERVO7_LINE
   uint8_t servo7_idx;
   uint16_t servo7_failsafe;
+  bool servo7_tmotor;
 #endif
 #ifdef SERVO8_LINE
   uint8_t servo8_idx;
   uint16_t servo8_failsafe;
+  bool servo8_tmotor;
 #endif
 #ifdef SERVO9_LINE
   uint8_t servo9_idx;
   uint16_t servo9_failsafe;
+  bool servo9_tmotor;
 #endif
 #ifdef SERVO10_LINE
   uint8_t servo10_idx;
   uint16_t servo10_failsafe;
+  bool servo10_tmotor;
 #endif
 };
 static struct servos_t servos = {
@@ -100,42 +110,82 @@ void servos_init(void) {
 #ifdef SERVO1_LINE
   servos.servo1_idx = config_get_by_name("SERVO1 index", 0)->val.i;
   servos.servo1_failsafe = config_get_by_name("SERVO1 failsafe", 0)->val.i;
+  if(servos.servo1_idx >= 100 && servos.servo1_idx != 255) {
+    servos.servo1_idx -= 100;
+    servos.servo1_tmotor = true;
+  }
 #endif
 #ifdef SERVO2_LINE
   servos.servo2_idx = config_get_by_name("SERVO2 index", 0)->val.i;
   servos.servo2_failsafe = config_get_by_name("SERVO2 failsafe", 0)->val.i;
+  if(servos.servo2_idx >= 100 && servos.servo2_idx != 255) {
+    servos.servo2_idx -= 100;
+    servos.servo2_tmotor = true;
+  }
 #endif
 #ifdef SERVO3_LINE
   servos.servo3_idx = config_get_by_name("SERVO3 index", 0)->val.i;
   servos.servo3_failsafe = config_get_by_name("SERVO3 failsafe", 0)->val.i;
+  if(servos.servo3_idx >= 100 && servos.servo3_idx != 255) {
+    servos.servo3_idx -= 100;
+    servos.servo3_tmotor = true;
+  }
 #endif
 #ifdef SERVO4_LINE
   servos.servo4_idx = config_get_by_name("SERVO4 index", 0)->val.i;
   servos.servo4_failsafe = config_get_by_name("SERVO4 failsafe", 0)->val.i;
+  if(servos.servo4_idx >= 100 && servos.servo4_idx != 255) {
+    servos.servo4_idx -= 100;
+    servos.servo4_tmotor = true;
+  }
 #endif
 #ifdef SERVO5_LINE
   servos.servo5_idx = config_get_by_name("SERVO5 index", 0)->val.i;
   servos.servo5_failsafe = config_get_by_name("SERVO5 failsafe", 0)->val.i;
+  if(servos.servo5_idx >= 100 && servos.servo5_idx != 255) {
+    servos.servo5_idx -= 100;
+    servos.servo5_tmotor = true;
+  }
 #endif
 #ifdef SERVO6_LINE
   servos.servo6_idx = config_get_by_name("SERVO6 index", 0)->val.i;
   servos.servo6_failsafe = config_get_by_name("SERVO6 failsafe", 0)->val.i;
+  if(servos.servo6_idx >= 100 && servos.servo6_idx != 255) {
+    servos.servo6_idx -= 100;
+    servos.servo6_tmotor = true;
+  }
 #endif
 #ifdef SERVO7_LINE
   servos.servo7_idx = config_get_by_name("SERVO7 index", 0)->val.i;
   servos.servo7_failsafe = config_get_by_name("SERVO7 failsafe", 0)->val.i;
+  if(servos.servo7_idx >= 100 && servos.servo7_idx != 255) {
+    servos.servo7_idx -= 100;
+    servos.servo7_tmotor = true;
+  }
 #endif
 #ifdef SERVO8_LINE
   servos.servo8_idx = config_get_by_name("SERVO8 index", 0)->val.i;
   servos.servo8_failsafe = config_get_by_name("SERVO8 failsafe", 0)->val.i;
+  if(servos.servo8_idx >= 100 && servos.servo8_idx != 255) {
+    servos.servo8_idx -= 100;
+    servos.servo8_tmotor = true;
+  }
 #endif
 #ifdef SERVO9_LINE
   servos.servo9_idx = config_get_by_name("SERVO9 index", 0)->val.i;
   servos.servo9_failsafe = config_get_by_name("SERVO9 failsafe", 0)->val.i;
+  if(servos.servo9_idx >= 100 && servos.servo9_idx != 255) {
+    servos.servo9_idx -= 100;
+    servos.servo9_tmotor = true;
+  }
 #endif
 #ifdef SERVO10_LINE
   servos.servo10_idx = config_get_by_name("SERVO10 index", 0)->val.i;
   servos.servo10_failsafe = config_get_by_name("SERVO10 failsafe", 0)->val.i;
+  if(servos.servo10_idx >= 100 && servos.servo10_idx != 255) {
+    servos.servo10_idx -= 100;
+    servos.servo10_tmotor = true;
+  }
 #endif
 
   // Initialize the servos which are used
@@ -218,6 +268,23 @@ void servos_disable(void) {
   board_disable_servos();
 }
 
+uint16_t servo_cmd(uint8_t idx, struct uavcan_equipment_esc_RawCommand *msg, uint16_t failsafe, bool tmotor) {
+  if(idx < msg->cmd.len) {
+    int16_t servo_cmd = 1500+(msg->cmd.data[idx]*1000/8191);
+    if(servo_cmd < 0) servo_cmd = 0;
+
+    if(tmotor) {
+      // Scale the command to the motor range
+      servo_cmd = 1000 + (msg->cmd.data[idx]*1000/8191);
+      if(servo_cmd < 1000) servo_cmd = 1000;
+    }
+
+    return servo_cmd;
+  } else {
+    return failsafe;
+  }
+}
+
 /*
   handle a RAW_COMMAND request
  */
@@ -233,94 +300,34 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 
   // Set the target commands for the servo
 #ifdef SERVO1_LINE
-  int16_t servo1_cmd;
-  if(servos.servo1_idx < msg.cmd.len) {
-    servo1_cmd = 1500+(msg.cmd.data[servos.servo1_idx]*1000/8191);
-    if(servo1_cmd < 0) servo1_cmd = 0;
-  } else {
-    servo1_cmd = servos.servo1_failsafe;
-  }
+  int16_t servo1_cmd = servo_cmd(servos.servo1_idx, &msg, servos.servo1_failsafe, servos.servo1_tmotor);
 #endif
 #ifdef SERVO2_LINE
-  int16_t servo2_cmd;
-  if(servos.servo2_idx < msg.cmd.len) {
-    servo2_cmd = 1500+(msg.cmd.data[servos.servo2_idx]*1000/8191);
-    if(servo2_cmd < 0) servo2_cmd = 0;
-  } else {
-    servo2_cmd = servos.servo2_failsafe;
-  }
+  int16_t servo2_cmd = servo_cmd(servos.servo2_idx, &msg, servos.servo2_failsafe, servos.servo2_tmotor);
 #endif
 #ifdef SERVO3_LINE
-  int16_t servo3_cmd;
-  if(servos.servo3_idx < msg.cmd.len) {
-    servo3_cmd = 1500+(msg.cmd.data[servos.servo3_idx]*1000/8191);
-    if(servo3_cmd < 0) servo3_cmd = 0;
-  } else {
-    servo3_cmd = servos.servo3_failsafe;
-  }
+  int16_t servo3_cmd = servo_cmd(servos.servo3_idx, &msg, servos.servo3_failsafe, servos.servo3_tmotor);
 #endif
 #ifdef SERVO4_LINE
-  int16_t servo4_cmd;
-  if(servos.servo4_idx < msg.cmd.len) {
-    servo4_cmd = 1500+(msg.cmd.data[servos.servo4_idx]*1000/8191);
-    if(servo4_cmd < 0) servo4_cmd = 0;
-  } else {
-    servo4_cmd = servos.servo4_failsafe;
-  }
+  int16_t servo4_cmd = servo_cmd(servos.servo4_idx, &msg, servos.servo4_failsafe, servos.servo4_tmotor);
 #endif
 #ifdef SERVO5_LINE
-  int16_t servo5_cmd;
-  if(servos.servo5_idx < msg.cmd.len) {
-    servo5_cmd = 1500+(msg.cmd.data[servos.servo5_idx]*1000/8191);
-    if(servo5_cmd < 0) servo5_cmd = 0;
-  } else {
-    servo5_cmd = servos.servo5_failsafe;
-  }
+  int16_t servo5_cmd = servo_cmd(servos.servo5_idx, &msg, servos.servo5_failsafe, servos.servo5_tmotor);
 #endif
 #ifdef SERVO6_LINE
-  int16_t servo6_cmd;
-  if(servos.servo6_idx < msg.cmd.len) {
-    servo6_cmd = 1500+(msg.cmd.data[servos.servo6_idx]*1000/8191);
-    if(servo6_cmd < 0) servo6_cmd = 0;
-  } else {
-    servo6_cmd = servos.servo6_failsafe;
-  }
+  int16_t servo6_cmd = servo_cmd(servos.servo6_idx, &msg, servos.servo6_failsafe, servos.servo6_tmotor);
 #endif
 #ifdef SERVO7_LINE
-  int16_t servo7_cmd;
-  if(servos.servo7_idx < msg.cmd.len) {
-    servo7_cmd = 1500+(msg.cmd.data[servos.servo7_idx]*1000/8191);
-    if(servo7_cmd < 0) servo7_cmd = 0;
-  } else {
-    servo7_cmd = servos.servo7_failsafe;
-  }
+  int16_t servo7_cmd = servo_cmd(servos.servo7_idx, &msg, servos.servo7_failsafe, servos.servo7_tmotor);
 #endif
 #ifdef SERVO8_LINE
-  int16_t servo8_cmd;
-  if(servos.servo8_idx < msg.cmd.len) {
-    servo8_cmd = 1500+(msg.cmd.data[servos.servo8_idx]*1000/8191);
-    if(servo8_cmd < 0) servo8_cmd = 0;
-  } else {
-    servo8_cmd = servos.servo8_failsafe;
-  }
+  int16_t servo8_cmd = servo_cmd(servos.servo8_idx, &msg, servos.servo8_failsafe, servos.servo8_tmotor);
 #endif
 #ifdef SERVO9_LINE
-  int16_t servo9_cmd;
-  if(servos.servo9_idx < msg.cmd.len) {
-    servo9_cmd = 1500+(msg.cmd.data[servos.servo9_idx]*1000/8191);
-    if(servo9_cmd < 0) servo9_cmd = 0;
-  } else {
-    servo9_cmd = servos.servo9_failsafe;
-  }
+  int16_t servo9_cmd = servo_cmd(servos.servo9_idx, &msg, servos.servo9_failsafe, servos.servo9_tmotor);
 #endif
 #ifdef SERVO10_LINE
-  int16_t servo10_cmd;
-  if(servos.servo10_idx < msg.cmd.len) {
-    servo10_cmd = 1500+(msg.cmd.data[servos.servo10_idx]*1000/8191);
-    if(servo10_cmd < 0) servo10_cmd = 0;
-  } else {
-    servo10_cmd = servos.servo10_failsafe;
-  }
+  int16_t servo10_cmd = servo_cmd(servos.servo10_idx, &msg, servos.servo10_failsafe, servos.servo10_tmotor);
 #endif
 
 #include "faulhaber_ctrl.h"
