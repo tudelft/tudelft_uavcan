@@ -38,6 +38,28 @@ static THD_WORKING_AREA(ntc1_wa, 512);
 static struct adc_ntc_t ntc2;
 static THD_WORKING_AREA(ntc2_wa, 512);
 
+struct adc_power_t {
+  uint8_t device_id;
+  float frequency;
+
+  // ADC values
+  int16_t current_channel;
+  uint8_t current_channel_idx;
+  int16_t power_channel;
+  uint8_t power_channel_idx;
+
+  // Calibration values
+  float power_mult;
+  float power_offset;
+  float current_mult;
+  float current_offset;
+};
+
+static struct adc_power_t power1;
+static THD_WORKING_AREA(power1_wa, 512);
+static struct adc_power_t power2;
+static THD_WORKING_AREA(power2_wa, 512);
+
 struct potmeter_t {
   uint8_t channel;
   uint8_t channel_idx;
@@ -202,6 +224,60 @@ static THD_FUNCTION(ntc_thread, p) {
 }
 
 /*
+ * POWER thread.
+ */
+static THD_FUNCTION(power_thread, p) {
+  struct adc_power_t *power = (struct adc_power_t *)p;
+
+  uint64_t vt_delay = 1000.f / power->frequency;
+  while(true) {
+    // Calculate the current
+    float raw_adc, current, voltage = 0;
+    if(power->current_channel >= 0) {
+      raw_adc = (adc1_buffers[power->current_channel_idx].sum / adc1_buffers[power->current_channel_idx].av_nb_sample);
+      current = (raw_adc / 4095) * 3.3 * power->current_mult + power->current_offset;
+    }
+
+    // Calculate the voltage
+    if(power->power_channel >= 0) {
+      raw_adc = (adc1_buffers[power->power_channel_idx].sum / adc1_buffers[power->power_channel_idx].av_nb_sample);
+      voltage = (raw_adc / 4095) * 3.3 * power->power_mult + power->power_offset;
+    }
+
+    // Set the values
+    struct uavcan_equipment_power_CircuitStatus circuitStatus;
+    circuitStatus.circuit_id = power->device_id;
+    circuitStatus.current = current;
+    circuitStatus.voltage = voltage;
+
+    uint8_t buffer[UAVCAN_EQUIPMENT_POWER_CIRCUITSTATUS_MAX_SIZE];
+    uint16_t total_size = uavcan_equipment_power_CircuitStatus_encode(&circuitStatus, buffer);
+
+    static uint8_t transfer_id;
+    uavcanBroadcastAll(
+        UAVCAN_EQUIPMENT_POWER_CIRCUITSTATUS_SIGNATURE,
+        UAVCAN_EQUIPMENT_POWER_CIRCUITSTATUS_ID, &transfer_id,
+        CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+
+    // struct uavcan_equipment_power_BatteryInfo batteryInfo;
+    // batteryInfo.battery_id = power->device_id;
+    // batteryInfo.current = current;
+    // batteryInfo.voltage = voltage;
+
+    // uint8_t buffer[UAVCAN_EQUIPMENT_POWER_BATTERYINFO_MAX_SIZE];
+    // uint16_t total_size = uavcan_equipment_power_BatteryInfo_encode(&batteryInfo, buffer);
+
+    // static uint8_t transfer_id;
+    // uavcanBroadcastAll(
+    //     UAVCAN_EQUIPMENT_POWER_BATTERYINFO_SIGNATURE,
+    //     UAVCAN_EQUIPMENT_POWER_BATTERYINFO_ID, &transfer_id,
+    //     CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+ 
+    chThdSleepMilliseconds(vt_delay);
+  }
+}
+
+/*
  * POTMETER thread.
  */
 static THD_FUNCTION(potmeter_thread, p) {
@@ -287,19 +363,46 @@ void adcs_init(void) {
   adc1_chan_config[9].available = true;
 #endif
 
-  /* Define default onboard power measurements */
-#ifdef ADC_POWER1_CHANNEL
-  if(adc1_chan_config[ADC_POWER1_CHANNEL].available) {
-    adc1_channel_map[adc1_num_channels++] = adc1_chan_config[ADC_POWER1_CHANNEL].channel;
-    palSetLineMode(adc1_chan_config[ADC_POWER1_CHANNEL].line, PAL_MODE_INPUT_ANALOG);
+  /* Define the power inputs */
+  power1.device_id = config_get_by_name("POWER1 device id", 0)->val.i;
+  power1.frequency = config_get_by_name("POWER1 frequency", 0)->val.f;
+  power1.power_channel = config_get_by_name("POWER1 volt chan", 0)->val.i;
+  power1.current_channel = config_get_by_name("POWER1 current chan", 0)->val.i;
+  power1.power_mult = config_get_by_name("POWER1 volt mult", 0)->val.f;
+  power1.power_offset = config_get_by_name("POWER1 volt offset", 0)->val.f;
+  power1.current_mult = config_get_by_name("POWER1 current mult", 0)->val.f;
+  power1.current_offset = config_get_by_name("POWER1 current offset", 0)->val.f;
+
+  if(power1.frequency > 0 && adc1_chan_config[power1.power_channel].available) {
+    power1.power_channel_idx = adc1_num_channels++;
+    adc1_channel_map[power1.power_channel_idx] = adc1_chan_config[power1.power_channel].channel;
+    palSetLineMode(adc1_chan_config[power1.power_channel].line, PAL_MODE_INPUT_ANALOG);
   }
-#endif
-#ifdef ADC_POWER2_CHANNEL
-  if(adc1_chan_config[ADC_POWER2_CHANNEL].available) {
-    adc1_channel_map[adc1_num_channels++] = adc1_chan_config[ADC_POWER2_CHANNEL].channel;
-    palSetLineMode(adc1_chan_config[ADC_POWER2_CHANNEL].line, PAL_MODE_INPUT_ANALOG);
+  if(power1.frequency > 0 && adc1_chan_config[power1.current_channel].available) {
+    power1.current_channel_idx = adc1_num_channels++;
+    adc1_channel_map[power1.current_channel_idx] = adc1_chan_config[power1.current_channel].channel;
+    palSetLineMode(adc1_chan_config[power1.current_channel].line, PAL_MODE_INPUT_ANALOG);
   }
-#endif
+
+  power2.device_id = config_get_by_name("POWER2 device id", 0)->val.i;
+  power2.frequency = config_get_by_name("POWER2 frequency", 0)->val.f;
+  power2.power_channel = config_get_by_name("POWER2 volt chan", 0)->val.i;
+  power2.current_channel = config_get_by_name("POWER2 current chan", 0)->val.i;
+  power2.power_mult = config_get_by_name("POWER2 volt mult", 0)->val.f;
+  power2.power_offset = config_get_by_name("POWER2 volt offset", 0)->val.f;
+  power2.current_mult = config_get_by_name("POWER2 current mult", 0)->val.f;
+  power2.current_offset = config_get_by_name("POWER2 current offset", 0)->val.f;
+
+  if(power2.frequency > 0 && adc1_chan_config[power2.power_channel].available) {
+    power2.power_channel_idx = adc1_num_channels++;
+    adc1_channel_map[power2.power_channel_idx] = adc1_chan_config[power2.power_channel].channel;
+    palSetLineMode(adc1_chan_config[power2.power_channel].line, PAL_MODE_INPUT_ANALOG);
+  }
+  if(power2.frequency > 0 && adc1_chan_config[power2.current_channel].available) {
+    power2.current_channel_idx = adc1_num_channels++;
+    adc1_channel_map[power2.current_channel_idx] = adc1_chan_config[power2.current_channel].channel;
+    palSetLineMode(adc1_chan_config[power2.current_channel].line, PAL_MODE_INPUT_ANALOG);
+  }
 
   /* Possible NTC inputs */
   ntc1.device_id = config_get_by_name("NTC1 device id", 0)->val.i;
@@ -360,6 +463,14 @@ void adcs_init(void) {
   adcStart(&ADCD1, NULL);
   adcStartConversion(&ADCD1, &adc1_group, adc_samples, ADC_MAX_CHANNELS * MAX_AV_NB_SAMPLE);
 
+  // Start POWER transmitting threads
+  if(power1.frequency > 0) {
+    chThdCreateStatic(power1_wa, sizeof(power1_wa), NORMALPRIO-22, power_thread, (void*)&power1);
+  }
+  if(power2.frequency > 0) {
+    chThdCreateStatic(power2_wa, sizeof(power2_wa), NORMALPRIO-22, power_thread, (void*)&power2);
+  }
+
   // Start NTC transmitting threads
   if(ntc1.frequency > 0) {
     chThdCreateStatic(ntc1_wa, sizeof(ntc1_wa), NORMALPRIO-21, ntc_thread, (void*)&ntc1);
@@ -375,4 +486,12 @@ void adcs_init(void) {
   if(potmeter2.frequency > 0) {
     chThdCreateStatic(potmeter2_wa, sizeof(potmeter2_wa), NORMALPRIO-20, potmeter_thread, (void*)&potmeter2);
   }
+}
+
+float adcs_get_value(uint8_t channel) {
+  if(channel >= adc1_num_channels) {
+    return 0;
+  }
+
+  return (adc1_buffers[channel].sum / adc1_buffers[channel].av_nb_sample);
 }

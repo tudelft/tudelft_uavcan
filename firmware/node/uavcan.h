@@ -19,6 +19,8 @@
 #include <uavcan.equipment.actuator.Status.h>
 #include <uavcan.equipment.actuator.ArrayCommand.h>
 #include <uavcan.equipment.range_sensor.Measurement.h>
+#include <uavcan.equipment.power.BatteryInfo.h>
+#include <uavcan.equipment.power.CircuitStatus.h>
 #include <uavcan.protocol.param.GetSet.h>
 #include <uavcan.protocol.param.ExecuteOpcode.h>
 #include <uavcan.protocol.param.ExecuteOpcode.h>

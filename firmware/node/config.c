@@ -85,16 +85,23 @@ struct config_item_t config_items[] = {
     {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 10000},
 
 /* POWER ADC's configuration */
-#ifdef ADC_POWER1_MUL
-    {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 10000},
-    {.name = "POWER1 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
-    {.name = "POWER1 multiply", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER1_MUL, .def.f = ADC_POWER1_MUL, .min.f = 0, .max.f = 1000000},
-#endif
-#ifdef ADC_POWER2_MUL
-    {.name = "POWER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 1, .def.f = 1, .min.f = 0, .max.f = 10000},
-    {.name = "POWER2 low voltage", .type = CONFIG_TYPE_FLOAT, .val.f = 25, .def.f = 25, .min.f = 0, .max.f = 1000},
-    {.name = "POWER2 multiply", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER2_MUL, .def.f = ADC_POWER2_MUL, .min.f = 0, .max.f = 1000000},
-#endif
+    {.name = "POWER1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
+    {.name = "POWER1 volt chan", .type = CONFIG_TYPE_INT, .val.i = ADC_POWER1_CHANNEL, .def.i = ADC_POWER1_CHANNEL, .min.i = -1, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POWER1 current chan", .type = CONFIG_TYPE_INT, .val.i = -1, .def.i = -1, .min.i = -1, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POWER1 volt mult", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER1_MUL, .def.f = ADC_POWER1_MUL, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER1 volt offset", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER1 current mult", .type = CONFIG_TYPE_FLOAT, .val.f = 50.0, .def.f = 50.0, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER1 current offset", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
+
+    {.name = "POWER2 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
+    {.name = "POWER2 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
+    {.name = "POWER2 volt chan", .type = CONFIG_TYPE_INT, .val.i = ADC_POWER2_CHANNEL, .def.i = ADC_POWER2_CHANNEL, .min.i = -1, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POWER2 current chan", .type = CONFIG_TYPE_INT, .val.i = -1, .def.i = -1, .min.i = -1, .max.i = ADC_MAX_CHANNELS-1},
+    {.name = "POWER2 volt mult", .type = CONFIG_TYPE_FLOAT, .val.f = ADC_POWER2_MUL, .def.f = ADC_POWER2_MUL, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER2 volt offset", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER2 current mult", .type = CONFIG_TYPE_FLOAT, .val.f = 50.0, .def.f = 50.0, .min.f = 0, .max.f = 1000000},
+    {.name = "POWER2 current offset", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000000},
 
 /* NTC ADC's configuration */
     {.name = "NTC1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},

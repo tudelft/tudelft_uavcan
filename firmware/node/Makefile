@@ -178,6 +178,8 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.equipment.device.Temperature.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.actuator.Status.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.range_sensor.Measurement.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.power.BatteryInfo.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.power.CircuitStatus.c \
 	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
        faulhaber_ctrl.c drs_parachute.c tfmini.c \
        main.c
