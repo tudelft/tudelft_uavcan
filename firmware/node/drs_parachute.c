@@ -11,7 +11,7 @@ struct drs_parachute_t drs_parachute;
 static void mavlink_send(mavlink_message_t *msg) {
     uint8_t buf[300];
     size_t len = mavlink_msg_to_send_buffer(buf, msg);
-    uartSendFullTimeout(drs_parachute.port, &len, (void *)buf, TIME_MS2I(40));
+    uartSendFullTimeout(drs_parachute.port, &len, (void *)buf, TIME_MS2I(100));
 }
 
 /* Send heartbeat */
@@ -52,6 +52,19 @@ static void mavlink_send_cmd_parachute(uint8_t action) {
     mavlink_send(&message);
 }
 
+/* Send command ack message */
+static void mavlink_send_command_ack(uint16_t command, uint8_t result, uint8_t target_system, uint8_t target_component) {
+    mavlink_command_ack_t command_ack;
+    command_ack.command = command;
+    command_ack.result = result;
+    command_ack.target_system = target_system;
+    command_ack.target_component = target_component;
+
+    mavlink_message_t message;
+    mavlink_msg_command_ack_encode(11, MAV_COMP_ID_AUTOPILOT1, &message, &command_ack);
+    mavlink_send(&message);
+}
+
 static THD_WORKING_AREA(drs_parachute_wa, 3072);
 static THD_FUNCTION(drs_parachute_thd, arg) {
   (void)arg;
@@ -71,7 +84,7 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
     // Try to receive bytes
     size_t recv_size = 50;
     uint8_t buf[50];
-    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(10)) != MSG_RESET) {
+    if(uartReceiveTimeout(drs_parachute.port, &recv_size, (void *)buf, TIME_MS2I(20)) != MSG_RESET) {
         for(uint16_t i = 0; i < recv_size; i++) {
             // Received a message
             if(mavlink_parse_char(MAVLINK_COMM_1, buf[i], &message, &status)) {
@@ -84,6 +97,16 @@ static THD_FUNCTION(drs_parachute_thd, arg) {
                         if(command_long.command == MAV_CMD_REQUEST_MESSAGE && command_long.param1 == MAVLINK_MSG_ID_AUTOPILOT_VERSION) {
                             mavlink_send_autopilot_version();
                             chThdSleepMilliseconds(100);
+                        }
+                        else if(command_long.command == MAV_CMD_DO_FLIGHTTERMINATION && command_long.param1 > 0.5) {
+                            // TODO: kill all the motors
+                            mavlink_send_command_ack(MAV_CMD_DO_FLIGHTTERMINATION, MAV_RESULT_ACCEPTED, message.sysid, message.compid);
+                            chThdSleepMilliseconds(50);
+                        }
+                        else if(command_long.command == MAV_CMD_COMPONENT_ARM_DISARM && command_long.param1 == 0  && command_long.param2 == 21196) {
+                            // TODO: kill all the motors
+                            mavlink_send_command_ack(MAV_CMD_COMPONENT_ARM_DISARM, MAV_RESULT_ACCEPTED, message.sysid, message.compid);
+                            chThdSleepMilliseconds(50);
                         }
                         break;
                     }
@@ -120,6 +143,9 @@ void drs_parachute_set(enum parachute_status_t status) {
         return;
     
     // Send the command
+    drs_parachute.status = status;
+    last_cmd = chVTGetSystemTimeX();
+
     if(status == DRS_STATUS_RELEASE) {
         mavlink_send_cmd_parachute(PARACHUTE_RELEASE);
     } else if (status == DRS_STATUS_DISABLE) {
@@ -127,9 +153,6 @@ void drs_parachute_set(enum parachute_status_t status) {
     } else if (status == DRS_STATUS_ENABLE) {
         mavlink_send_cmd_parachute(PARACHUTE_ENABLE);
     }
-    
-    drs_parachute.status = status;
-    last_cmd = chVTGetSystemTimeX();
 }
 
 void drs_parachute_init(void) {
