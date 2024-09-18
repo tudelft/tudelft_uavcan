@@ -9,7 +9,7 @@
 #if STM32_CAN_USE_CAN1
 static THD_WORKING_AREA(can1_rx_wa, 1024*3);
 static THD_WORKING_AREA(can1_tx_wa, 1024*3);
-static THD_WORKING_AREA(can1_uavcan_wa, 2048*4);
+static THD_WORKING_AREA(can1_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can1_iface = {
   .can_driver = &CAND1,
@@ -30,7 +30,7 @@ static struct uavcan_iface_t can1_iface = {
 #if STM32_CAN_USE_CAN2
 static THD_WORKING_AREA(can2_rx_wa, 1024*3);
 static THD_WORKING_AREA(can2_tx_wa, 1024*3);
-static THD_WORKING_AREA(can2_uavcan_wa, 2048*4);
+static THD_WORKING_AREA(can2_uavcan_wa, 2048*3);
 
 static struct uavcan_iface_t can2_iface = {
   .can_driver = &CAND2,
