@@ -145,6 +145,7 @@ LDSCRIPT= $(BOARDDIR)/$(BOARD)/node.ld
 # C sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
 CSRC = $(ALLCSRC) \
+       $(CHIBIOS)/os/various/syscalls.c \
        $(TESTSRC) \
 	     $(CANARDDIR)/canard.c \
        $(DSDLC_SRC_DIR)/uavcan.protocol.dynamic_node_id.Allocation.c \
@@ -180,8 +181,9 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.equipment.range_sensor.Measurement.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.BatteryInfo.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.CircuitStatus.c \
+       $(DSDLC_SRC_DIR)/uavcan.equipment.fuelcell.Status.c \
 	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
-       faulhaber_ctrl.c drs_parachute.c tfmini.c \
+       faulhaber_ctrl.c drs_parachute.c tfmini.c ie_fuelcell.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

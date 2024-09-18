@@ -187,7 +187,7 @@ static void faulhaber_ctrl_broadcast_status(void) {
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
 }
 
-static THD_WORKING_AREA(faulhaber_ctrl_telem_send_wa, 512);
+static THD_WORKING_AREA(faulhaber_ctrl_telem_send_wa, 256);
 static THD_FUNCTION(faulhaber_ctrl_telem_send_thd, arg) {
   (void)arg;
   chRegSetThreadName("faulhaber_ctrl_telem");

@@ -16,6 +16,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include <ch.h>
 #include <hal.h>
@@ -27,6 +28,7 @@
 #include "faulhaber_ctrl.h"
 #include "esc_telem.h"
 #include "tfmini.h"
+#include "ie_fuelcell.h"
 
 /*===========================================================================*/
 /* Generic code.                                                             */
@@ -58,6 +60,7 @@ int main(void) {
   faulhaber_ctrl_init();
   esc_telem_init();
   tfmini_init();
+  ie_fuelcell_init();
 
   /*
    * Normal main() thread activity, spawning shells.
@@ -66,4 +69,36 @@ int main(void) {
     chThdSleepMilliseconds(500);
     palToggleLine(LED1_LINE);
   }
+}
+
+/***************************************************************************/
+
+__attribute__((used))
+void _exit(int status) {
+
+  (void) status;
+
+  chSysHalt("exit");
+  abort();
+}
+
+/***************************************************************************/
+
+__attribute__((used))
+int _kill(int pid, int sig) {
+
+  (void) pid;
+  (void) sig;
+
+  chSysHalt("kill");
+  abort();
+}
+
+/***************************************************************************/
+
+__attribute__((used))
+int _getpid(void) {
+
+  return 1;
+  abort();
 }
