@@ -3,7 +3,7 @@
 #include "config.h"
 
 
-struct esc_telem_t esc_telem;
+struct esc_telem_t esc_telem = {0};
 static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len);
 static void esc_telem_parse_tmotor_flame(uint8_t msg[], uint8_t len);
 static void esc_telem_parse_tmotor_alpha(uint8_t msg[], uint8_t len);
@@ -29,6 +29,12 @@ static THD_FUNCTION(esc_telem_thd, arg) {
 }
 
 static void esc_telem_broadcast_status(void) {
+  // Inhibit when no telemetry is received
+  if(!esc_telem.data.received) {
+    esc_telem.data.timeout_cnt++;
+    return;
+  }
+
   // Set the values
   struct uavcan_equipment_esc_Status escStatus;
   escStatus.error_count = esc_telem.data.timeout_cnt;
@@ -46,6 +52,7 @@ static void esc_telem_broadcast_status(void) {
       UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE,
       UAVCAN_EQUIPMENT_ESC_STATUS_ID, &transfer_id,
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
+  esc_telem.data.received = false;
 }
 
 static THD_WORKING_AREA(esc_telem_send_wa, 512);
@@ -131,6 +138,7 @@ static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len) {
         esc_telem.data.current = curr_u / 100.0f;
         esc_telem.data.consumption = (msg[5] << 8) | msg[6];
         esc_telem.data.erpm = erpm_u * 100;
+        esc_telem.data.received = true;
     }
 }
 
@@ -178,6 +186,8 @@ static void esc_telem_parse_tmotor_flame(uint8_t msg[], uint8_t len)
     // alpha_esc_data.capacitor_temp = tempTable[msg[19]];
     // alpha_esc_data.status_code = (uint16_t)((msg[20] <<8 | msg[21]));
     // alpha_esc_data.verify_code = (uint16_t)((msg[22] <<8 | msg[23]));// shift the right byte instead of the
+
+    esc_telem.data.received = true;
 }
 
 /**
@@ -213,4 +223,6 @@ static void esc_telem_parse_tmotor_alpha(uint8_t msg[], uint8_t len)
     //alpha_esc_data.capacitor_temp = Table[msg[19]];
     //alpha_esc_data.status_code = (uint16_t)((msg[20] <<8 | msg[21]));
     //alpha_esc_data.verify_code = (uint16_t)((msg[22] <<8 | msg[23]));// shift the right byte instead of the
+
+    esc_telem.data.received = true;
 }

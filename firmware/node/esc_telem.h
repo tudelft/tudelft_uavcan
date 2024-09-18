@@ -11,6 +11,7 @@ struct esc_telem_data_t {
     uint32_t erpm;
 
     // Errors
+    bool received;
     uint32_t timeout_cnt;
 };
 
