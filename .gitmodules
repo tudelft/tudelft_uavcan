@@ -12,7 +12,7 @@
 	url = git@github.com:mavlink/c_library_v2.git
 [submodule "firmware/lib/DSDL"]
 	path = firmware/lib/DSDL
-	url = https://github.com/DroneCAN/DSDL
+	url = https://github.com/tudelft/DSDL
 [submodule "firmware/lib/dronecan_dsdlc"]
 	path = firmware/lib/dronecan_dsdlc
 	url = https://github.com/DroneCAN/dronecan_dsdlc
