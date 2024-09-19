@@ -330,11 +330,11 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   int16_t servo10_cmd = servo_cmd(servos.servo10_idx, &msg, servos.servo10_failsafe, servos.servo10_tmotor);
 #endif
 
-#include "faulhaber_ctrl.h"
+/*#include "faulhaber_ctrl.h"
   if(faulhaber_ctrl.port != NULL && faulhaber_ctrl.index < msg.cmd.len) {
     int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos);
     faulhaber_ctrl.target_position = (uint64_t)faulhaber_ctrl.min_pos + ((msg.cmd.data[faulhaber_ctrl.index] + 8192)*range / (8191+8192));
-  }
+  }*/
 
 #include "drs_parachute.h"
   if(drs_parachute.port != NULL && drs_parachute.index < msg.cmd.len) {

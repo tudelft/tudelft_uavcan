@@ -25,7 +25,7 @@
 #include "adcs.h"
 #include "drs_parachute.h"
 #include "servos.h"
-#include "faulhaber_ctrl.h"
+//#include "faulhaber_ctrl.h"
 #include "esc_telem.h"
 #include "tfmini.h"
 #include "ie_fuelcell.h"
@@ -57,7 +57,7 @@ int main(void) {
   adcs_init();
   drs_parachute_init();
   servos_init();
-  faulhaber_ctrl_init();
+  //faulhaber_ctrl_init();
   esc_telem_init();
   tfmini_init();
   ie_fuelcell_init();

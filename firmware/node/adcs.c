@@ -34,9 +34,9 @@ struct adc_ntc_t {
 };
 
 static struct adc_ntc_t ntc1;
-static THD_WORKING_AREA(ntc1_wa, 512);
+static THD_WORKING_AREA(ntc1_wa, 256);
 static struct adc_ntc_t ntc2;
-static THD_WORKING_AREA(ntc2_wa, 512);
+static THD_WORKING_AREA(ntc2_wa, 256);
 
 struct adc_power_t {
   uint8_t device_id;
@@ -56,9 +56,9 @@ struct adc_power_t {
 };
 
 static struct adc_power_t power1;
-static THD_WORKING_AREA(power1_wa, 512);
+static THD_WORKING_AREA(power1_wa, 256);
 static struct adc_power_t power2;
-static THD_WORKING_AREA(power2_wa, 512);
+static THD_WORKING_AREA(power2_wa, 256);
 
 struct potmeter_t {
   uint8_t channel;
@@ -72,9 +72,9 @@ struct potmeter_t {
 };
 
 static struct potmeter_t potmeter1;
-static THD_WORKING_AREA(potmeter1_wa, 512);
+static THD_WORKING_AREA(potmeter1_wa, 256);
 static struct potmeter_t potmeter2;
-static THD_WORKING_AREA(potmeter2_wa, 512);
+static THD_WORKING_AREA(potmeter2_wa, 256);
 
 
 /**

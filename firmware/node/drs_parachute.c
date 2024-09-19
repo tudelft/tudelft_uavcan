@@ -65,7 +65,7 @@ static void mavlink_send_command_ack(uint16_t command, uint8_t result, uint8_t t
     mavlink_send(&message);
 }
 
-static THD_WORKING_AREA(drs_parachute_wa, 3072);
+static THD_WORKING_AREA(drs_parachute_wa, 2048);
 static THD_FUNCTION(drs_parachute_thd, arg) {
   (void)arg;
   chRegSetThreadName("drs_parachute");

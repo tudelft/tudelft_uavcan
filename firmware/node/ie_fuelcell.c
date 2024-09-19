@@ -5,7 +5,7 @@
 
 struct ie_fuelcell_t ie_fuelcell = {0};
 
-static THD_WORKING_AREA(ie_fuelcell_wa, 512);
+static THD_WORKING_AREA(ie_fuelcell_wa, 256);
 static THD_FUNCTION(ie_fuelcell_thd, arg) {
   (void)arg;
   chRegSetThreadName("ie_fuelcell");

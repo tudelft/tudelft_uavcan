@@ -18,7 +18,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Os -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -38,7 +38,7 @@ endif
 
 # Linker extra options here.
 ifeq ($(USE_LDOPT),)
-  USE_LDOPT = 
+  USE_LDOPT = --print-memory-usage
 endif
 
 # Enable this if you want link time optimizations (LTO).
@@ -183,7 +183,7 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.CircuitStatus.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.fuelcell.Status.c \
 	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
-       faulhaber_ctrl.c drs_parachute.c tfmini.c ie_fuelcell.c \
+       drs_parachute.c tfmini.c ie_fuelcell.c \
        main.c
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global

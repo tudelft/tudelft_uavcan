@@ -30,7 +30,7 @@ struct faulhaber_ctrl_t faulhaber_ctrl;
 static void faulhaber_parser(struct faulhaber_parser_t *p, uint8_t c);
 static void faulhaber_send_command(uint8_t cmd_code, uint8_t *data, uint8_t data_length) ;
 
-static THD_WORKING_AREA(faulhaber_ctrl_rx_wa, 512);
+static THD_WORKING_AREA(faulhaber_ctrl_rx_wa, 256);
 static THD_FUNCTION(faulhaber_ctrl_rx_thd, arg) {
   (void)arg;
   chRegSetThreadName("faulhaber_ctrl_rx");
