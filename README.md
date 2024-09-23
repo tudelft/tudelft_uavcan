@@ -11,6 +11,7 @@ This repository contains the UAVCAN modules used by the TU Delft.
 
 # Start CAN-UAV (configure CAN Nodes)
  - find the device name of your CAN-USB
+ - if you don't have them yet, install the ```sudo apt-get install can-utils```
  - sudo slcand -o -c -f -s8 /dev/ttyACM0 can0
  - sudo ifconfig can0 up
  - uavcan_gui_tool
