@@ -254,6 +254,8 @@ static THD_FUNCTION(uavcan_thrd, p) {
     iface->node_id_allocation_unique_id_offset = 0;
   }
 
+  uint64_t last_offset = UINT64_MAX;
+  uint8_t tries = 0;
   while(true) {
     broadcast_node_status(iface);
 
@@ -261,10 +263,17 @@ static THD_FUNCTION(uavcan_thrd, p) {
     canardCleanupStaleTransfers(&iface->canard, TIME_I2MS(chVTGetSystemTimeX()));
     chMtxUnlock(&iface->mutex);
 
-    chThdSleepMilliseconds(500);
+    for(uint8_t i = 0; i < 50; i++) {
+      chThdSleepMilliseconds(20);
 
-    if(firmware_update.in_progress && firmware_update.iface == iface)
-      request_fw_file(iface);
+      if(firmware_update.in_progress && firmware_update.iface == iface && (last_offset != firmware_update.file_offset || tries >= 2)) {
+        tries = 0;
+        last_offset = firmware_update.file_offset;
+        request_fw_file(iface);
+      } else if(firmware_update.in_progress && firmware_update.iface == iface) {
+        tries++;
+      }
+    }
   }
 }
 
@@ -343,6 +352,10 @@ static void onTransferReceived(CanardInstance* ins, CanardRxTransfer* transfer)
       if(transfer->transfer_type == CanardTransferTypeResponse)
         handle_file_read_response(iface, transfer);
       break;
+    case UAVCAN_PROTOCOL_FILE_GETINFO_ID:
+      if(transfer->transfer_type == CanardTransferTypeResponse)
+        handle_file_getinfo_response(iface, transfer);
+      break;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
       NVIC_SystemReset();
       break;
@@ -388,6 +401,9 @@ static bool shouldAcceptTransfer(const CanardInstance* ins,
       return true;
     case UAVCAN_PROTOCOL_FILE_READ_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_FILE_READ_SIGNATURE;
+      return true;
+    case UAVCAN_PROTOCOL_FILE_GETINFO_ID:
+      *out_data_type_signature = UAVCAN_PROTOCOL_FILE_GETINFO_SIGNATURE;
       return true;
     case UAVCAN_PROTOCOL_RESTARTNODE_ID:
       *out_data_type_signature = UAVCAN_PROTOCOL_RESTARTNODE_SIGNATURE;

@@ -25,7 +25,7 @@ union config_val_t {
 };
 
 struct config_item_t {
-  char name[42];
+  char name[32];
   enum config_type_t type;
 
   union config_val_t val;

@@ -13,6 +13,8 @@
 #include <uavcan.protocol.debug.LogMessage.h>
 #include <uavcan.protocol.file.BeginFirmwareUpdate.h>
 #include <uavcan.protocol.file.Read.h>
+#include <uavcan.protocol.file.GetInfo.h>
+#include <uavcan.protocol.debug.LogMessage.h>
 
 
 struct uavcan_iface_t {

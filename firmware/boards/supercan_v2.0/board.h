@@ -27,9 +27,9 @@
  * Board identifier.
  */
 #define BOARD_SUPERCAN_V2
-#define BOARD_NAME              "Supercan V2.0"
+#define BOARD_NAME              "Supercan V2.5"
 #define HARD_VER_MAJOR          2
-#define HARD_VER_MINOR          0
+#define HARD_VER_MINOR          5
 
 /*
  * Board frequencies.

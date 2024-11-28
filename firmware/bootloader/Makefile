@@ -18,7 +18,7 @@
 
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -Os -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -159,6 +159,8 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_req.c \
        $(DSDLC_SRC_DIR)/uavcan.protocol.file.BeginFirmwareUpdate_res.c \
        $(DSDLC_SRC_DIR)/uavcan.protocol.file.Path.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.GetInfo_req.c \
+       $(DSDLC_SRC_DIR)/uavcan.protocol.file.GetInfo_res.c \
        $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_req.c \
        $(DSDLC_SRC_DIR)/uavcan.protocol.file.Read_res.c \
 	     flash.c uavcan.c node.c firmware_update.c \

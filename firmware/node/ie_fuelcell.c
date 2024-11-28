@@ -21,6 +21,7 @@ static THD_FUNCTION(ie_fuelcell_thd, arg) {
             // If we receive a start reset
             if(buf[i] == '<') {
                 ie_fuelcell.data.term_id = 0;
+                ie_fuelcell.data.term_size = 0;
                 ie_fuelcell.data.calc_checksum = '<';
                 ie_fuelcell.data.in_string = true;
             }
@@ -43,7 +44,7 @@ static THD_FUNCTION(ie_fuelcell_thd, arg) {
                 ie_fuelcell.data.term[ie_fuelcell.data.term_size++] = 0;
                 switch(ie_fuelcell.data.term_id) {
                     case 0:
-                        ie_fuelcell.data.tank_pressure = strtoul(ie_fuelcell.data.term, NULL, 10);
+                        ie_fuelcell.data.tank_pressure = strtol(ie_fuelcell.data.term, NULL, 10);
                         break;
                     case 1:
                         ie_fuelcell.data.regulated_pressure = strtof(ie_fuelcell.data.term, NULL) * 100.f;

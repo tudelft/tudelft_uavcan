@@ -3,6 +3,7 @@
 
 #include "node.h"
 #include "firmware_update.h"
+#include "chprintf.h"
 
 
 static void makeNodeStatusMessage(
@@ -59,9 +60,14 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     pkt.hardware_version.minor = 0;
     memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
-    pkt.name.len = strlen(BOARD_NAME) + 3;
-    strcpy((char *)pkt.name.data, "BL ");
-    strcat((char *)pkt.name.data, BOARD_NAME);
+    uint16_t flash_size = *(const uint16_t*)FLASHSIZE_BASE;
+    if(flash_size < 256U) {
+      chsnprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s BL (WRONG FLASH %uK!!)", BOARD_NAME, flash_size);
+      pkt.name.len = strlen((char *)pkt.name.data);
+    } else {
+      chsnprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s BL (%uK)", BOARD_NAME, flash_size);
+      pkt.name.len = strlen((char *)pkt.name.data);
+    }
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);
     uavcanRequestOrRespond(iface,

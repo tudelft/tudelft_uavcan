@@ -8,6 +8,7 @@
 #endif
 
 static inline void flash_wait_nb(void) {
+  __DSB();
   while (FLASH->SR & FLASH_SR_BSY);
 }
 
@@ -93,11 +94,12 @@ void flash_write_block(void *adr, uint8_t *data, uint16_t len)
   volatile uint16_t *flash = (volatile uint16_t *)adr;
   uint16_t *v = (uint16_t *)data;
   len = (len + 1) / 2;
+  chSysLock();
   flash_unlock();
   flash_wait_nb();
-  FLASH->CR |= FLASH_CR_PG;
   for (i = 0; i < len; ++i)
   {
+    FLASH->CR = FLASH_CR_PG;
     if (flash[i] != v[i])
     {
       flash[i] = v[i];
@@ -106,4 +108,5 @@ void flash_write_block(void *adr, uint8_t *data, uint16_t len)
   }
   FLASH->CR &= ~FLASH_CR_PG;
   FLASH->CR |= FLASH_CR_LOCK;
+  chSysUnlock();
 }

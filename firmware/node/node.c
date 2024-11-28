@@ -1,5 +1,6 @@
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 
 #include "node.h"
 #include "servos.h"
@@ -55,8 +56,15 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
     pkt.hardware_version.minor = HARD_VER_MINOR;
     memcpy(pkt.hardware_version.unique_id, (void *)UID_BASE, 12);
 
-    pkt.name.len = strlen(BOARD_NAME);
-    memcpy(pkt.name.data, BOARD_NAME, pkt.name.len);
+    uint16_t flash_size = *(const uint16_t*)FLASHSIZE_BASE;
+    if(flash_size < 256U) {
+      snprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (WRONG FLASH %uK!!)", BOARD_NAME, flash_size);
+      pkt.name.len = strlen((char *)pkt.name.data);
+    } else {
+      snprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (%uK)", BOARD_NAME, flash_size);
+      pkt.name.len = strlen((char *)pkt.name.data);
+    }
+   
 
     uint16_t total_size = uavcan_protocol_GetNodeInfoResponse_encode(&pkt, buffer);
     uavcanRequestOrRespond(iface,
