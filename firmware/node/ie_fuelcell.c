@@ -145,6 +145,7 @@ void ie_fuelcell_init(void) {
         NULL,
         NULL,
         NULL,
+        NULL,
         baud,
         USART_CR1_UE | USART_CR1_RE,
         0,

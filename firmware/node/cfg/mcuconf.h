@@ -196,7 +196,7 @@
 #define STM32_UART_USE_USART1               TRUE
 #define STM32_UART_USE_USART2               TRUE
 #define STM32_UART_USE_USART3               TRUE
-#define STM32_UART_USART1_IRQ_PRIORITY      11
+#define STM32_UART_USART1_IRQ_PRIORITY      12
 #define STM32_UART_USART2_IRQ_PRIORITY      12
 #define STM32_UART_USART3_IRQ_PRIORITY      12
 #define STM32_UART_USART1_DMA_PRIORITY      0
@@ -207,7 +207,7 @@
 /*
  * USB driver system settings.
  */
-#define STM32_USB_USE_OTG1                  TRUE
+#define STM32_USB_USE_OTG1                  FALSE
 #define STM32_USB_OTG1_IRQ_PRIORITY         14
 #define STM32_USB_OTG1_RX_FIFO_SIZE         512
 #define STM32_USB_OTG_THREAD_PRIO           LOWPRIO

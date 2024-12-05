@@ -66,7 +66,7 @@ static struct servos_t servos = {
   .initialized = false
 };
 
-static void servos_timeout_cb(void *arg __attribute__((unused))) {
+static void servos_timeout_cb(virtual_timer_t *vtp __attribute__((unused)), void *p __attribute__((unused))) {
   // When no commands are received timeout and set everything to failsafe
   uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
