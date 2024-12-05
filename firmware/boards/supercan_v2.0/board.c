@@ -87,6 +87,7 @@ void board_init_servos(bool servos[], uint8_t cnt) {
     },
     /* HW dependent part.*/
     0,
+    0,
     0
   };
   PWMConfig pwmcfg_tim2 = {
@@ -100,6 +101,7 @@ void board_init_servos(bool servos[], uint8_t cnt) {
       {PWM_OUTPUT_DISABLED, NULL}
     },
     /* HW dependent part.*/
+    0,
     0,
     0
   };
@@ -115,6 +117,7 @@ void board_init_servos(bool servos[], uint8_t cnt) {
     },
     /* HW dependent part.*/
     0,
+    0,
     0
   };
   PWMConfig pwmcfg_tim5 = {
@@ -128,6 +131,7 @@ void board_init_servos(bool servos[], uint8_t cnt) {
       {PWM_OUTPUT_DISABLED, NULL}
     },
     /* HW dependent part.*/
+    0,
     0,
     0
   };

@@ -81,6 +81,7 @@ void esc_telem_init(void) {
         NULL,
         NULL,
         NULL,
+        NULL,
         (esc_telem.type == 0)? 115200 : 19200,
         USART_CR1_UE | USART_CR1_RE,
         0,

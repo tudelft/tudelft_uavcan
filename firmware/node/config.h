@@ -36,6 +36,9 @@ struct config_item_t {
 
 extern struct config_item_t config_items[];
 extern const uint8_t config_items_cnt;
+extern uint16_t config_crc;
+extern uint16_t config_crc_r1;
+extern uint16_t config_crc_r2;
 
 extern void config_init(void);
 extern void config_save(void);

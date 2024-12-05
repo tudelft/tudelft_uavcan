@@ -1,9 +1,8 @@
 #include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
 
 #include "node.h"
 #include "servos.h"
+#include <chprintf.h>
 
 static void makeNodeStatusMessage(
     uint8_t buffer[UAVCAN_PROTOCOL_NODESTATUS_MAX_SIZE])
@@ -58,10 +57,10 @@ void handle_get_node_info(struct uavcan_iface_t *iface, CanardRxTransfer* transf
 
     uint16_t flash_size = *(const uint16_t*)FLASHSIZE_BASE;
     if(flash_size < 256U) {
-      snprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (WRONG FLASH %uK!!)", BOARD_NAME, flash_size);
+      chsnprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (WRONG FLASH %uK!!)", BOARD_NAME, flash_size);
       pkt.name.len = strlen((char *)pkt.name.data);
     } else {
-      snprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (%uK)", BOARD_NAME, flash_size);
+      chsnprintf((char *)pkt.name.data, sizeof(pkt.name.data), "%s (%uK)", BOARD_NAME, flash_size);
       pkt.name.len = strlen((char *)pkt.name.data);
     }
    

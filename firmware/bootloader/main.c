@@ -66,6 +66,12 @@ void jump_to_app(void)
   // disable all interrupt sources
   port_disable();
 
+  SCB->ICSR = SCB_ICSR_PENDSVCLR_Msk;
+  /* Disable all interrupts */
+  uint8_t i;
+  for(i=0; i<8; i++)
+    NVIC->ICER[i] = NVIC->IABR[i];
+
   /* switch exception handlers to the application */
   SCB->VTOR = APP_START_ADDRESS;
 

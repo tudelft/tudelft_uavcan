@@ -30,6 +30,7 @@ This repository contains the UAVCAN modules used by the TU Delft.
  STM32F105RC with 256k total memory (0x08000000 - 0x8040000)
  - 0x08000000: Bootloader (32k)
  - 0x08008000: Node (194k)
- - 0x08038800: Node Config CRC (8)
- - 0x08038808: Node Config (29k)
+ - 0x0803F000: Node Config CRC 1 (4)
+ - 0x0803F004: Node Config CRC 2 (4)
+ - 0x0803F008: Node Config (4k - 8 bytes)
  - 0x08040000: End

@@ -217,6 +217,7 @@ void faulhaber_ctrl_init(void) {
         NULL,
         NULL,
         NULL,
+        NULL,
         baudrate,
         USART_CR1_UE | USART_CR1_RE | USART_CR1_TE,
         0,
