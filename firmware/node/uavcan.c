@@ -5,6 +5,7 @@
 #include "config.h"
 #include "node.h"
 #include "servos.h"
+#include <chprintf.h>
 
 #if STM32_CAN_USE_CAN1
 static THD_WORKING_AREA(can1_rx_wa, 1024*3);
@@ -58,6 +59,7 @@ enum uavcan_bridge_t {
 };
 
 static enum uavcan_bridge_t uavcan_bridge = UAVCAN_BRIDGE_NONE;
+static uint8_t can_termination = 0;
 
 /**
  * Blocking version of the Request or Respons canard sending
@@ -94,7 +96,7 @@ int uavcanBroadcast(struct uavcan_iface_t *iface,   ///< The interface to write 
                     const void* payload,            ///< Transfer payload
                     uint16_t payload_len)           ///< Length of the above, in bytes
 {
-  int res;
+  int res = 0;
   chMtxLock(&iface->mutex);
   res = canardBroadcast(&iface->canard, data_type_signature, data_type_id, inout_transfer_id, priority, payload, payload_len);
   chMtxUnlock(&iface->mutex);
@@ -128,29 +130,45 @@ int uavcanBroadcastAll(uint64_t data_type_signature,   ///< See above
   return res;
 }
 
-// void uavcanLog(struct uavcan_iface_t *iface, char *msg, uint8_t len) {
-//   // char *test = "SUPERCAN";
-//   // uavcan_protocol_debug_LogMessage logMsg;
-//   // logMsg.level.value = UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_DEBUG;
-//   // logMsg.source.data = (uint8_t*)test;
-//   // logMsg.source.len = 0;
-//   // logMsg.text.data = (uint8_t*)msg;
-//   // logMsg.text.len = 0;
+void uavcanDebug(uint8_t level, char *source, char *msg) {
+  uint8_t buffer[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
 
-//   uint8_t send_buf[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
-//   uint32_t send_len = UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE;//uavcan_protocol_debug_LogMessage_encode(&logMsg, send_buf);
+  struct uavcan_protocol_debug_LogMessage logMsg;
+  logMsg.level.value = level;
+  strncpy((char*)logMsg.source.data, source, 31);
+  logMsg.source.len = strlen((char*)logMsg.source.data);
+  strncpy((char*)logMsg.text.data, msg, 90);
+  logMsg.text.len = strlen((char*)logMsg.text.data);
 
-//   uint8_t debug_transfer_id = 100;
-//   //canardBroadcast(&iface->canard, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID, &debug_transfer_id, CANARD_TRANSFER_PRIORITY_LOW, send_buf, send_len);
-//   //chEvtBroadcast(&iface->tx_request);
-//   /*uavcanBroadcast(iface,
-//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE,
-//                                               UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID,
-//                                               &debug_transfer_id,
-//                                               CANARD_TRANSFER_PRIORITY_LOW,
-//                                               send_buf,
-//                                               send_len);*/
-// }
+  uint8_t debug_transfer_id = 111;
+  uint32_t len = uavcan_protocol_debug_LogMessage_encode(&logMsg, buffer);
+  uavcanBroadcastAll(UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE,
+                     UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID,
+                     &debug_transfer_id,
+                     CANARD_TRANSFER_PRIORITY_LOW,
+                     buffer,
+                     len);
+}
+
+void uavcanDebugIface(struct uavcan_iface_t *iface, uint8_t level, char *source, char *msg) {
+  uint8_t buffer[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
+
+  struct uavcan_protocol_debug_LogMessage logMsg;
+  logMsg.level.value = level;
+  strncpy((char*)logMsg.source.data, source, 31);
+  logMsg.source.len = strlen((char*)logMsg.source.data);
+  strncpy((char*)logMsg.text.data, msg, 90);
+  logMsg.text.len = strlen((char*)logMsg.text.data);
+
+  uint8_t debug_transfer_id = 111;
+  uint32_t len = uavcan_protocol_debug_LogMessage_encode(&logMsg, buffer);
+  uavcanBroadcast(iface, UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_SIGNATURE,
+                     UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_ID,
+                     &debug_transfer_id,
+                     CANARD_TRANSFER_PRIORITY_LOW,
+                     buffer,
+                     len);
+}
 
 /*
  * Receiver thread.
@@ -162,7 +180,7 @@ static THD_FUNCTION(can_rx, p) {
   struct uavcan_iface_t *iface = (struct uavcan_iface_t *)p;
 
   chRegSetThreadName("can_rx");
-  chEvtRegister(&iface->can_driver->rxfull_event, &el, 0);
+  chEvtRegister(&iface->can_driver->rxfull_event, &el, EVENT_MASK(0));
   while (true) {
     if (chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100)) == 0)
       continue;
@@ -197,9 +215,9 @@ static THD_FUNCTION(can_tx, p) {
   uint8_t err_cnt = 0;
 
   chRegSetThreadName("can_tx");
-  chEvtRegister(&iface->can_driver->txempty_event, &txc, 0);
-  chEvtRegister(&iface->can_driver->error_event, &txe, 1);
-  chEvtRegister(&iface->tx_request, &txr, 2);
+  chEvtRegisterMask(&iface->can_driver->txempty_event, &txc, EVENT_MASK(0));
+  chEvtRegisterMask(&iface->can_driver->error_event, &txe, EVENT_MASK(1));
+  chEvtRegisterMask(&iface->tx_request, &txr, EVENT_MASK(2));
 
   while (true) {
     eventmask_t evts = chEvtWaitAnyTimeout(ALL_EVENTS, TIME_MS2I(100));
@@ -315,6 +333,17 @@ static THD_FUNCTION(uavcan_thrd, p) {
     // Preparing for timeout; if response is received, this value will be updated from the callback.
     iface->node_id_allocation_unique_id_offset = 0;
   }
+
+  /* Print debug information */
+  char msg[90];
+  chsnprintf(msg, 89, "Terminate CAN1: %d, CAN2: %d", can_termination & 0x1, can_termination & 0x2);
+  if(uavcan_bridge == UAVCAN_BRIDGE_CAN1TOCAN2)
+    strncat(msg, "; Bridge: CAN1 -> CAN2", 89);
+  else if(uavcan_bridge == UAVCAN_BRIDGE_CAN2TOCAN1)
+    strncat(msg, "; Bridge: CAN2 -> CAN1", 89);
+  else
+    strncat(msg, "; Bridge: None", 89);
+  uavcanDebugIface(iface, UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_INFO, "UAVCAN", msg);
 
   while(true) {
     broadcast_node_status(iface);
@@ -710,7 +739,7 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
  */
 void uavcanInit(void) {
   // Get the configuration variables
-  uint8_t can_termination = config_get_by_name("CAN termination", 0)->val.i;
+  can_termination = config_get_by_name("CAN termination", 0)->val.i;
   uavcan_bridge = config_get_by_name("CAN bridge", 0)->val.i;
 
 #if defined(CAN1_TERM_LINE) // High is closed

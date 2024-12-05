@@ -67,4 +67,7 @@ int uavcanBroadcast(struct uavcan_iface_t *iface, uint64_t data_type_signature, 
 int uavcanBroadcastAll(uint64_t data_type_signature, uint16_t data_type_id,
     uint8_t* inout_transfer_id, uint8_t priority, const void* payload, uint16_t payload_len);
 
+void uavcanDebug(uint8_t level, char *source, char *msg);
+void uavcanDebugIface(struct uavcan_iface_t *iface, uint8_t level, char *source, char *msg);
+
 #endif /* UAVCAN_H */

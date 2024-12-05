@@ -20,6 +20,7 @@
 
 #include <ch.h>
 #include <hal.h>
+#include "chprintf.h"
 #include "config.h"
 #include "uavcan.h"
 #include "adcs.h"
@@ -33,6 +34,9 @@
 /*===========================================================================*/
 /* Generic code.                                                             */
 /*===========================================================================*/
+
+//#pragma GCC push_options
+//#pragma GCC optimize ("O0")
 
 /*
  * Application entry point.
@@ -71,34 +75,4 @@ int main(void) {
   }
 }
 
-/***************************************************************************/
-
-__attribute__((used))
-void _exit(int status) {
-
-  (void) status;
-
-  chSysHalt("exit");
-  abort();
-}
-
-/***************************************************************************/
-
-__attribute__((used))
-int _kill(int pid, int sig) {
-
-  (void) pid;
-  (void) sig;
-
-  chSysHalt("kill");
-  abort();
-}
-
-/***************************************************************************/
-
-__attribute__((used))
-int _getpid(void) {
-
-  return 1;
-  abort();
-}
+//#pragma GCC pop_options

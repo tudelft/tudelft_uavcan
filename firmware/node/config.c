@@ -2,9 +2,11 @@
 
 #include <string.h>
 #include "flash.h"
+#include <chprintf.h>
 
-#define CONFIG_ADDR_CRC     (0x08008000 + 0x30800)
+#define CONFIG_ADDR_CRC     (0x0803F000)
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
+
 
 struct config_item_t config_items[] = {
 /* Node configuration */
@@ -140,7 +142,9 @@ struct config_item_t config_items[] = {
     {.name = "POTMETER2 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
     {.name = "POTMETER2 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},
 };
-static uint16_t config_crc = 0;
+uint16_t config_crc = 0;
+uint16_t config_crc_r1 = 0;
+uint16_t config_crc_r2 = 0;
 const uint8_t config_items_cnt = sizeof(config_items) / sizeof(struct config_item_t);
 
 //char (*__kaboom)[sizeof(config_items)] = 1; // Way to verify the size while compiling
@@ -165,9 +169,10 @@ static uint16_t calc_crc(struct config_item_t *config_items, uint8_t len) {
 
 void config_init(void) {
     config_crc = calc_crc(config_items, config_items_cnt);
-    uint16_t flash_crc = *(uint16_t *)(CONFIG_ADDR_CRC);
+    config_crc_r1 = *(uint16_t *)(CONFIG_ADDR_CRC);
+    config_crc_r2 = *(uint16_t *)(CONFIG_ADDR_CRC+2);
 
-    if(flash_crc != config_crc) {
+    if(config_crc_r1 != config_crc || config_crc_r2 != config_crc) {
         config_reset();
         config_save();
     }
@@ -184,13 +189,17 @@ void config_save(void) {
     for(uint8_t i = 0; i < config_items_cnt; i++)
         values[i] = config_items[i].val;
 
-    flash_erase_pages(CONFIG_ADDR_CRC, 2 + size);
-    flash_write_block((void *)CONFIG_ADDR_CRC, (uint8_t *)&config_crc, 2);
-    flash_write_block((void *)CONFIG_ADDR, (uint8_t *)values, size);
+    flash_erase_pages(CONFIG_ADDR_CRC, 4 + size);
+    flash_write_block(CONFIG_ADDR, (uint8_t *)values, size);
+
+    if(flash_verify_block((void*)CONFIG_ADDR, (uint8_t *)values, size) == 1) {
+        flash_write_block(CONFIG_ADDR_CRC, (uint8_t *)&config_crc, 2);
+        flash_write_block(CONFIG_ADDR_CRC+2, (uint8_t *)&config_crc, 2);
+    }
 }
 
 void config_read(void) {
-    union config_val_t *values = (union config_val_t *)CONFIG_ADDR;
+    volatile union config_val_t *values = (volatile union config_val_t *)CONFIG_ADDR;
 
     // Copy the values for loading
     for(uint8_t i = 0; i < config_items_cnt; i++)
@@ -328,6 +337,16 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
                            CanardResponse,
                            buffer,
                            total_size);
+
+    if((!req.name.data || !req.name.len) && req.index == 0) {
+        /* Debug information */
+        char msg[90];
+        chsnprintf(msg, 90, "Reading start (f1:%X f2:%X c:%X)", config_crc_r1, config_crc_r2, config_crc);
+        uavcanDebug(UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_INFO, "Config", msg);
+    }
+    else if(item == NULL) {
+        uavcanDebug(UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_INFO, "Config", "Reading finished");
+    }
 }
 
 #pragma GCC diagnostic pop
@@ -360,4 +379,10 @@ void handle_param_execute_opcode(struct uavcan_iface_t *iface, CanardRxTransfer*
                            CanardResponse,
                            buffer,
                            total_size);
+
+    if(req.opcode == UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_ERASE) {
+        uavcanDebug(UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_INFO, "Config", "Erased");
+    } else if(req.opcode == UAVCAN_PROTOCOL_PARAM_EXECUTEOPCODE_REQUEST_OPCODE_SAVE) {
+        uavcanDebug(UAVCAN_PROTOCOL_DEBUG_LOGLEVEL_INFO, "Config", "Saved");
+    }
 }
