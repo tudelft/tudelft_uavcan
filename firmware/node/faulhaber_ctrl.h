@@ -6,7 +6,8 @@
 struct faulhaber_ctrl_t {
     uint8_t index;              ///< Telemetry and actuator index
     UARTDriver *port;           ///< Serial port
-    uint64_t telem_vt_delay;    ///< Frequency of the telemetry can message (convert to ms) 
+    uint64_t telem_vt_delay;    ///< Frequency of the telemetry can message (convert to ms)
+    UARTConfig uart_cfg;        ///< UART configuration
 
     uint8_t node_nb;            ///< Faulhaber node number to actuate
     uint32_t start_timeout_s;   ///< Start timeout in seconds

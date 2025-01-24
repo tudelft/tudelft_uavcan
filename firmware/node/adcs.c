@@ -6,12 +6,12 @@
 #include "adcs.h"
 #include "config.h"
 
-static ADCConversionGroup adc1_group;
-static adcsample_t adc_samples[ADC_MAX_CHANNELS * MAX_AV_NB_SAMPLE];
-struct adc_buf adc1_buffers[ADC_MAX_CHANNELS];
-static uint32_t adc1_sum_tmp[ADC_MAX_CHANNELS];
-static uint8_t adc1_samples_tmp[ADC_MAX_CHANNELS];
-static uint8_t adc1_channel_map[ADC_MAX_CHANNELS];
+static ADCConversionGroup adc1_group = {0};
+static adcsample_t adc_samples[ADC_MAX_CHANNELS * MAX_AV_NB_SAMPLE] = {0};
+struct adc_buf adc1_buffers[ADC_MAX_CHANNELS] = {0};
+static uint32_t adc1_sum_tmp[ADC_MAX_CHANNELS] = {0};
+static uint8_t adc1_samples_tmp[ADC_MAX_CHANNELS] = {0};
+static uint8_t adc1_channel_map[ADC_MAX_CHANNELS] = {0};
 static uint8_t adc1_num_channels = 0;
 
 struct adc_chan_config_t {
@@ -97,21 +97,24 @@ void adc1callback(ADCDriver *adcp)
     // if adcIsBufferComplete return true, the last filled
     // half buffer start in the middle of buffer, else, is start at
     // beginiing of buffer
-    const adcsample_t *buffer = adc_samples + (adcIsBufferComplete(adcp) ? n *adc1_num_channels : 0U);
+    const adcsample_t *buffer = adc_samples;
+    if (adcIsBufferComplete(adcp)) {
+      buffer = &adc_samples[n * adc1_num_channels];
+    }
 
-    for (int channel = 0; channel < adc1_num_channels; channel++) {
-      adc1_sum_tmp[channel] = 0;
+    for (uint8_t c = 0; c < adc1_num_channels; c++) {
+      adc1_sum_tmp[c] = 0;
       if (n > 0) {
-        adc1_samples_tmp[channel] = n;
+        adc1_samples_tmp[c] = n;
       } else {
-        adc1_samples_tmp[channel] = 1;
+        adc1_samples_tmp[c] = 1;
       }
       for (unsigned int sample = 0; sample < n; sample++) {
-        adc1_sum_tmp[channel] += buffer[channel + sample * adc1_num_channels];
+        adc1_sum_tmp[c] += buffer[c + sample * adc1_num_channels];
       }
     }
     chSysLockFromISR();
-    for (int channel = 0; channel < adc1_num_channels; channel++) {
+    for (uint8_t channel = 0; channel < adc1_num_channels; channel++) {
       adc1_buffers[channel].sum = adc1_sum_tmp[channel];
       adc1_buffers[channel].av_nb_sample = adc1_samples_tmp[channel];
     }
@@ -233,13 +236,13 @@ static THD_FUNCTION(power_thread, p) {
   while(true) {
     // Calculate the current
     float raw_adc, current, voltage = 0;
-    if(power->current_channel >= 0) {
+    if(power->current_channel >= 0 && adc1_buffers[power->current_channel_idx].av_nb_sample > 0) {
       raw_adc = (adc1_buffers[power->current_channel_idx].sum / adc1_buffers[power->current_channel_idx].av_nb_sample);
       current = (raw_adc / 4095) * 3.3 * power->current_mult + power->current_offset;
     }
 
     // Calculate the voltage
-    if(power->power_channel >= 0) {
+    if(power->power_channel >= 0 && adc1_buffers[power->power_channel_idx].av_nb_sample > 0) {
       raw_adc = (adc1_buffers[power->power_channel_idx].sum / adc1_buffers[power->power_channel_idx].av_nb_sample);
       voltage = (raw_adc / 4095) * 3.3 * power->power_mult + power->power_offset;
     }
@@ -286,7 +289,9 @@ static THD_FUNCTION(potmeter_thread, p) {
   uint64_t vt_delay = 1000.f / potmeter->frequency;
   while(true) {
     // Calculate the temperature
-    float raw_adc = (adc1_buffers[potmeter->channel_idx].sum / adc1_buffers[potmeter->channel_idx].av_nb_sample);
+    float raw_adc = 0;
+    if(adc1_buffers[potmeter->channel_idx].av_nb_sample > 0)
+      raw_adc = (adc1_buffers[potmeter->channel_idx].sum / adc1_buffers[potmeter->channel_idx].av_nb_sample);
     float scaled_value = (raw_adc - potmeter->cal_a) * potmeter->cal_b;
 
     // Set the values
@@ -461,7 +466,7 @@ void adcs_init(void) {
 
   // Start ADC in continious conversion mode
   adcStart(&ADCD1, NULL);
-  adcStartConversion(&ADCD1, &adc1_group, adc_samples, ADC_MAX_CHANNELS * MAX_AV_NB_SAMPLE);
+  adcStartConversion(&ADCD1, &adc1_group, adc_samples, MAX_AV_NB_SAMPLE);
 
   // Start POWER transmitting threads
   if(power1.frequency > 0) {

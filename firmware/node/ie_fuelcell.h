@@ -30,6 +30,7 @@ struct ie_fuelcell_t {
     uint64_t vt_delay;      ///< Frequency of the IE Fuelcell can message (convert to ms)
     UARTDriver *port;       ///< Serial port
     virtual_timer_t vt;     ///< Timer for transmitting on the CAN bus
+    UARTConfig uart_cfg;    ///< UART configuration
 
     struct ie_fuelcell_data_t data;   ///< The received telemetry data
 };

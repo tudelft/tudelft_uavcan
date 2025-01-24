@@ -2,7 +2,7 @@
 #include "config.h"
 #include <math.h>
 
-struct tfmini_t tfmini;
+struct tfmini_t tfmini = {0};
 
 /**
  * Parse the lidar bytes 1 by 1
@@ -107,7 +107,7 @@ static void tfmini_parse(uint8_t byte)
   }
 }
 
-static THD_WORKING_AREA(tfmini_wa, 512);
+static THD_WORKING_AREA(tfmini_wa, 1024);
 static THD_FUNCTION(tfmini_thd, arg) {
   (void)arg;
   chRegSetThreadName("tfmini");
@@ -127,22 +127,9 @@ static THD_FUNCTION(tfmini_thd, arg) {
 
 void tfmini_init(void) {
     // Get the configuration
-    uint32_t baudrate = config_get_by_name("TFMINI baudrate", 0)->val.i;
     tfmini.frequency = config_get_by_name("TFMINI frequency", 0)->val.f;
-
-    // The UART port settings
-    UARTConfig uart_cfg = {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        baudrate,
-        USART_CR1_UE | USART_CR1_RE | USART_CR1_TE,
-        0,
-        0
-    };
+    tfmini.uart_cfg.speed = config_get_by_name("TFMINI baudrate", 0)->val.i;
+    tfmini.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
     uint8_t port = config_get_by_name("TFMINI port", 0)->val.i;
@@ -165,7 +152,7 @@ void tfmini_init(void) {
     // Open the comminication port and start the thread
     if(tfmini.port != NULL) {
         tfmini.parse_status = TFMINI_PARSE_IDLE;
-        uartStart(tfmini.port, &uart_cfg);
+        uartStart(tfmini.port, &tfmini.uart_cfg);
         chThdCreateStatic(tfmini_wa, sizeof(tfmini_wa), NORMALPRIO-10, tfmini_thd, NULL);
     }
 }

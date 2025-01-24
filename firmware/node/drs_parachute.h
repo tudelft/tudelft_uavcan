@@ -14,6 +14,7 @@ struct drs_parachute_t {
     uint8_t index;                      ///< Aatuator index
     UARTDriver *port;                   ///< Serial port
     enum parachute_status_t status;     ///< Last parachute status
+    UARTConfig uart_cfg;                ///< UART configuration
 };
 extern struct drs_parachute_t drs_parachute;
 

@@ -136,21 +136,8 @@ void ie_fuelcell_init(void) {
     // Get the configuration
     ie_fuelcell.vt_delay = 1000.f / config_get_by_name("IE FC frequency", 0)->val.f;
     uint8_t port = config_get_by_name("IE FC port", 0)->val.i;
-    uint32_t baud = config_get_by_name("IE FC baud", 0)->val.i;
-
-    // Change port settings based on type
-    UARTConfig uart_cfg = {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        baud,
-        USART_CR1_UE | USART_CR1_RE,
-        0,
-        0
-    };
+    ie_fuelcell.uart_cfg.speed = config_get_by_name("IE FC baud", 0)->val.i;
+    ie_fuelcell.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE;
 
     // Configure the port
     if(port == 1) {
@@ -168,7 +155,7 @@ void ie_fuelcell_init(void) {
 
     // Open the telemetry port and start the thread
     if(ie_fuelcell.port != NULL) {
-        uartStart(ie_fuelcell.port, &uart_cfg);
+        uartStart(ie_fuelcell.port, &ie_fuelcell.uart_cfg);
         chThdCreateStatic(ie_fuelcell_wa, sizeof(ie_fuelcell_wa), NORMALPRIO-5, ie_fuelcell_thd, NULL);
         chThdCreateStatic(ie_fuelcell_send_wa, sizeof(ie_fuelcell_send_wa), NORMALPRIO-6, ie_fuelcell_send_thd, NULL);
     }

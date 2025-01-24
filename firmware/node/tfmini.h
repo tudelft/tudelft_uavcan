@@ -19,6 +19,7 @@ enum tfmini_parse_status_t {
 struct tfmini_t {
     UARTDriver *port;                   ///< Serial port
     float frequency;                    ///< The transmitting frequency
+    UARTConfig uart_cfg;                ///< UART configuration
 
     enum tfmini_parse_status_t parse_status;    ///< Parser state
     uint8_t parse_crc;                          ///< Calculated CRC

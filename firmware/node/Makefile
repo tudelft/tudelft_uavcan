@@ -16,9 +16,13 @@
 #
 #
 
+### DEBUG
+# USE_OPT = -g -ggdb -O0 -fomit-frame-pointer -falign-functions=16
+# USE_LTO = no
+
 # Compiler options here.
 ifeq ($(USE_OPT),)
-  USE_OPT = -O2 -ggdb -fomit-frame-pointer -falign-functions=16
+  USE_OPT = -O2 -fomit-frame-pointer -falign-functions=16
 endif
 
 # C specific options here (added to USE_OPT).
@@ -235,7 +239,8 @@ CPPWARN = -Wall -Wextra -Wundef
 UDEFS = -DCANARD_ENABLE_CUSTOM_BUILD_CONFIG=1
 UDEFS += -DGIT_DESC=$(GIT_DESC) -DSOFT_HASH=0x$(SOFT_HASH)
 UDEFS += -DSOFT_VER=$(SOFT_VER) -DSOFT_VER_MAJOR=$(SOFT_VER_MAJOR) -DSOFT_VER_MINOR=$(SOFT_VER_MINOR)
-UDEFS += -DCH_DBG_ENABLE_STACK_CHECK=TRUE
+#UDEFS += -DCH_DBG_SYSTEM_STATE_CHECK=TRUE -DCH_DBG_ENABLE_CHECKS=TRUE -DCH_DBG_ENABLE_ASSERTS=TRUE
+#UDEFS += -DCH_DBG_ENABLE_STACK_CHECK=TRUE -DCH_DBG_FILL_THREADS=TRUE
 
 # Define ASM defines here
 UADEFS =

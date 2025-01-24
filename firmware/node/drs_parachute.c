@@ -3,7 +3,7 @@
 #include <ardupilotmega/mavlink.h>
 
 
-struct drs_parachute_t drs_parachute;
+struct drs_parachute_t drs_parachute = {0};
 
 /**
  * Transmit a mavlink message over the UART port
@@ -158,22 +158,8 @@ void drs_parachute_set(enum parachute_status_t status) {
 void drs_parachute_init(void) {
     // Get the configuration
     drs_parachute.index = config_get_by_name("DRS index", 0)->val.i;
-    uint32_t baudrate = config_get_by_name("DRS baudrate", 0)->val.i;
-    
-
-    // The UART port settings
-    UARTConfig uart_cfg = {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        baudrate,
-        USART_CR1_UE | USART_CR1_RE | USART_CR1_TE,
-        0,
-        0
-    };
+    drs_parachute.uart_cfg.speed = config_get_by_name("DRS baudrate", 0)->val.i;
+    drs_parachute.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
     uint8_t port = config_get_by_name("DRS port", 0)->val.i;
@@ -189,13 +175,13 @@ void drs_parachute_init(void) {
         palSetLineMode(SERIAL3_RX_LINE, PAL_MODE_INPUT);
         palSetLineMode(SERIAL3_TX_LINE, PAL_MODE_STM32_ALTERNATE_PUSHPULL);
         drs_parachute.port = &UARTD3;
-    } else{
+    } else {
         drs_parachute.port = NULL;
     }
 
     // Open the telemetry port and start the thread
     if(drs_parachute.port != NULL) {
-        uartStart(drs_parachute.port, &uart_cfg);
+        uartStart(drs_parachute.port, &drs_parachute.uart_cfg);
         chThdCreateStatic(drs_parachute_wa, sizeof(drs_parachute_wa), NORMALPRIO+3, drs_parachute_thd, NULL);
     }
 }

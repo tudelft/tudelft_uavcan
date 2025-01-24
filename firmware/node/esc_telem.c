@@ -75,18 +75,8 @@ void esc_telem_init(void) {
     uint8_t port = config_get_by_name("ESC telem port", 0)->val.i;
 
     // Change port settings based on type
-    UARTConfig uart_cfg = {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        (esc_telem.type == 0)? 115200 : 19200,
-        USART_CR1_UE | USART_CR1_RE,
-        0,
-        0
-    };
+    esc_telem.uart_cfg.speed = (esc_telem.type == 0)? 115200 : 19200;
+    esc_telem.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE;
 
     // Configure the port
     if(port == 1) {
@@ -104,7 +94,7 @@ void esc_telem_init(void) {
 
     // Open the telemetry port and start the thread
     if(esc_telem.port != NULL) {
-        uartStart(esc_telem.port, &uart_cfg);
+        uartStart(esc_telem.port, &esc_telem.uart_cfg);
         chThdCreateStatic(esc_telem_wa, sizeof(esc_telem_wa), NORMALPRIO-5, esc_telem_thd, NULL);
         chThdCreateStatic(esc_telem_send_wa, sizeof(esc_telem_send_wa), NORMALPRIO-6, esc_telem_send_thd, NULL);
     }

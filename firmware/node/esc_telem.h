@@ -22,6 +22,7 @@ struct esc_telem_t {
     UARTDriver *port;       ///< Serial port
     virtual_timer_t vt;     ///< Timer for transmitting on the CAN bus
     uint16_t pole_pairs;    ///< Pole pairs in the motor for RPM
+    UARTConfig uart_cfg;    ///< UART configuration
 
     struct esc_telem_data_t data;   ///< The received telemetry data
 };

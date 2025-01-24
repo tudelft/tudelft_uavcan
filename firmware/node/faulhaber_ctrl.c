@@ -26,7 +26,7 @@ struct faulhaber_parser_t {
   uint8_t calc_crc8;
 };
 static struct faulhaber_parser_t faulhaber_p;
-struct faulhaber_ctrl_t faulhaber_ctrl;
+struct faulhaber_ctrl_t faulhaber_ctrl = {0};
 static void faulhaber_parser(struct faulhaber_parser_t *p, uint8_t c);
 static void faulhaber_send_command(uint8_t cmd_code, uint8_t *data, uint8_t data_length) ;
 
@@ -207,22 +207,8 @@ void faulhaber_ctrl_init(void) {
     faulhaber_ctrl.deadband = config_get_by_name("FAULHABER deadband", 0)->val.i;
     faulhaber_ctrl.min_pos = config_get_by_name("FAULHABER min position", 0)->val.i;
     faulhaber_ctrl.max_pos = config_get_by_name("FAULHABER max position", 0)->val.i;
-    uint32_t baudrate = config_get_by_name("FAULHABER baudrate", 0)->val.i;
-    
-
-    // The UART port settings
-    UARTConfig uart_cfg = {
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        baudrate,
-        USART_CR1_UE | USART_CR1_RE | USART_CR1_TE,
-        0,
-        0
-    };
+    faulhaber_ctrl.uart_cfg.speed = config_get_by_name("FAULHABER baudrate", 0)->val.i;
+    faulhaber_ctrl.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
     uint8_t port = config_get_by_name("FAULHABER port", 0)->val.i;
@@ -244,7 +230,7 @@ void faulhaber_ctrl_init(void) {
 
     // Open the telemetry port and start the thread
     if(faulhaber_ctrl.port != NULL) {
-        uartStart(faulhaber_ctrl.port, &uart_cfg);
+        uartStart(faulhaber_ctrl.port, &faulhaber_ctrl.uart_cfg);
         chThdCreateStatic(faulhaber_ctrl_rx_wa, sizeof(faulhaber_ctrl_rx_wa), NORMALPRIO+1, faulhaber_ctrl_rx_thd, NULL);
         chThdCreateStatic(faulhaber_ctrl_tx_wa, sizeof(faulhaber_ctrl_tx_wa), NORMALPRIO+2, faulhaber_ctrl_tx_thd, NULL);
         chThdCreateStatic(faulhaber_ctrl_telem_send_wa, sizeof(faulhaber_ctrl_telem_send_wa), NORMALPRIO-6, faulhaber_ctrl_telem_send_thd, NULL);

@@ -74,68 +74,68 @@ static bool servo_enabled[10] = {
   false
 };
 
-void board_init_servos(bool servos[], uint8_t cnt) {
-  PWMConfig pwmcfg_tim1 = {
-    1000000,                                  /* 1MHz PWM clock frequency.      */
-    2500,                                     /* PWM period frequency is 400Hz. */
-    NULL,
-    {
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-    },
-    /* HW dependent part.*/
-    0,
-    0,
-    0
-  };
-  PWMConfig pwmcfg_tim2 = {
-    1000000,                                  /* 1MHz PWM clock frequency.      */
-    2500,                                     /* PWM period frequency is 400Hz. */
-    NULL,
-    {
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-    },
-    /* HW dependent part.*/
-    0,
-    0,
-    0
-  };
-  PWMConfig pwmcfg_tim3 = {
-    1000000,                                  /* 1MHz PWM clock frequency.      */
-    2500,                                     /* PWM period frequency is 400Hz. */
-    NULL,
-    {
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-    },
-    /* HW dependent part.*/
-    0,
-    0,
-    0
-  };
-  PWMConfig pwmcfg_tim5 = {
-    1000000,                                  /* 1MHz PWM clock frequency.      */
-    2500,                                     /* PWM period frequency is 400Hz. */
-    NULL,
-    {
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL},
-      {PWM_OUTPUT_DISABLED, NULL}
-    },
-    /* HW dependent part.*/
-    0,
-    0,
-    0
-  };
+static PWMConfig pwmcfg_tim1 = {
+  1000000,                                  /* 1MHz PWM clock frequency.      */
+  2500,                                     /* PWM period frequency is 400Hz. */
+  NULL,
+  {
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL}
+  },
+  /* HW dependent part.*/
+  0,
+  0,
+  0
+};
+static PWMConfig pwmcfg_tim2 = {
+  1000000,                                  /* 1MHz PWM clock frequency.      */
+  2500,                                     /* PWM period frequency is 400Hz. */
+  NULL,
+  {
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL}
+  },
+  /* HW dependent part.*/
+  0,
+  0,
+  0
+};
+static PWMConfig pwmcfg_tim3 = {
+  1000000,                                  /* 1MHz PWM clock frequency.      */
+  2500,                                     /* PWM period frequency is 400Hz. */
+  NULL,
+  {
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL}
+  },
+  /* HW dependent part.*/
+  0,
+  0,
+  0
+};
+static PWMConfig pwmcfg_tim5 = {
+  1000000,                                  /* 1MHz PWM clock frequency.      */
+  2500,                                     /* PWM period frequency is 400Hz. */
+  NULL,
+  {
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL},
+    {PWM_OUTPUT_DISABLED, NULL}
+  },
+  /* HW dependent part.*/
+  0,
+  0,
+  0
+};
 
+void board_init_servos(bool servos[], uint8_t cnt) {
   if(cnt >= 1 && servos[0]) {
     palSetLineMode(SERVO1_LINE, PAL_MODE_STM32_ALTERNATE_PUSHPULL);
     pwmcfg_tim5.channels[3].mode = PWM_OUTPUT_ACTIVE_HIGH;
