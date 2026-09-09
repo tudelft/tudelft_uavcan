@@ -18,7 +18,7 @@ python_req:
 	pip install empy==3.3.4 pexpect
 	
 protocol:
-	cd ./lib/ && python3 dronecan_dsdlc/dronecan_dsdlc.py -O dsdlc_generated DSDL/dronecan DSDL/uavcan DSDL/com DSDL/ardupilot
+	cd ./lib/ && python3 dronecan_dsdlc/dronecan_dsdlc.py -O dsdlc_generated custom_DSDL/pprz DSDL/dronecan DSDL/uavcan DSDL/com DSDL/ardupilot
 
 %.upload:
 	@echo "Using Black Magic Probe with SWD on BMP_PORT $(BMP_PORT)"

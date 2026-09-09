@@ -99,7 +99,7 @@ static void ie_fuelcell_broadcast(void) {
   }
 
   // Set the values
-  struct uavcan_equipment_fuelcell_Status fuelcellStatus;
+  struct pprz_equipment_fuelcell_Status fuelcellStatus;
   fuelcellStatus.tank_pressure = ie_fuelcell.data.tank_pressure;
   fuelcellStatus.regulated_pressure = ie_fuelcell.data.regulated_pressure;
   fuelcellStatus.battery_voltage = ie_fuelcell.data.battery_voltage;
@@ -110,13 +110,13 @@ static void ie_fuelcell_broadcast(void) {
   fuelcellStatus.error_code = ie_fuelcell.data.error_code;
   fuelcellStatus.sub_code = ie_fuelcell.data.sub_code;
 
-  uint8_t buffer[UAVCAN_EQUIPMENT_FUELCELL_STATUS_MAX_SIZE];
-  uint16_t total_size = uavcan_equipment_fuelcell_Status_encode(&fuelcellStatus, buffer);
+  uint8_t buffer[PPRZ_EQUIPMENT_FUELCELL_STATUS_MAX_SIZE];
+  uint16_t total_size = pprz_equipment_fuelcell_Status_encode(&fuelcellStatus, buffer);
 
   static uint8_t transfer_id;
   uavcanBroadcastAll(
-      UAVCAN_EQUIPMENT_FUELCELL_STATUS_SIGNATURE,
-      UAVCAN_EQUIPMENT_FUELCELL_STATUS_ID, &transfer_id,
+      PPRZ_EQUIPMENT_FUELCELL_STATUS_SIGNATURE,
+      PPRZ_EQUIPMENT_FUELCELL_STATUS_ID, &transfer_id,
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
   ie_fuelcell.data.received = false;
 }
