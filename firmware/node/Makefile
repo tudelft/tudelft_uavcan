@@ -66,6 +66,29 @@ ifeq ($(USE_SMART_BUILD),)
   USE_SMART_BUILD = yes
 endif
 
+# Optional features
+ifeq ($(USE_DRS_PARACHUTE),)
+  USE_DRS_PARACHUTE = no
+endif
+ifeq ($(USE_ADCS),)
+  USE_ADCS = yes
+endif
+ifeq ($(USE_ESC_TELEM),)
+  USE_ESC_TELEM = yes
+endif
+ifeq ($(USE_TFMINI),)
+  USE_TFMINI = yes
+endif
+ifeq ($(USE_IE_FUELCELL),)
+  USE_IE_FUELCELL = no
+endif
+ifeq ($(USE_FAULHABER_CTRL),)
+  USE_FAULHABER_CTRL = no
+endif
+ifeq ($(FEETECH_MAX_SERVOS),)
+  FEETECH_MAX_SERVOS = 4
+endif
+
 #
 # Build global options
 ##############################################################################
@@ -187,9 +210,28 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.BatteryInfo.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.CircuitStatus.c \
        $(DSDLC_SRC_DIR)/pprz.equipment.fuelcell.Status.c \
-	     flash.c config.c uavcan.c node.c servos.c esc_telem.c adcs.c \
-       faulhaber_ctrl.c drs_parachute.c tfmini.c ie_fuelcell.c \
+       flash.c config.c uavcan.c node.c servos.c \
+         feetech_servos.c \
        main.c
+
+ifeq ($(USE_DRS_PARACHUTE),yes)
+  CSRC += drs_parachute.c
+endif
+ifeq ($(USE_ADCS),yes)
+  CSRC += adcs.c
+endif
+ifeq ($(USE_ESC_TELEM),yes)
+  CSRC += esc_telem.c
+endif
+ifeq ($(USE_TFMINI),yes)
+  CSRC += tfmini.c
+endif
+ifeq ($(USE_IE_FUELCELL),yes)
+  CSRC += ie_fuelcell.c
+endif
+ifeq ($(USE_FAULHABER_CTRL),yes)
+  CSRC += faulhaber_ctrl.c
+endif
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
 # setting.
@@ -239,6 +281,37 @@ CPPWARN = -Wall -Wextra -Wundef
 UDEFS = -DCANARD_ENABLE_CUSTOM_BUILD_CONFIG=1
 UDEFS += -DGIT_DESC=$(GIT_DESC) -DSOFT_HASH=0x$(SOFT_HASH)
 UDEFS += -DSOFT_VER=$(SOFT_VER) -DSOFT_VER_MAJOR=$(SOFT_VER_MAJOR) -DSOFT_VER_MINOR=$(SOFT_VER_MINOR)
+UDEFS += -DFEETECH_MAX_SERVOS=$(FEETECH_MAX_SERVOS)
+ifeq ($(USE_DRS_PARACHUTE),yes)
+UDEFS += -DUSE_DRS_PARACHUTE=1
+else
+UDEFS += -DUSE_DRS_PARACHUTE=0
+endif
+ifeq ($(USE_ADCS),yes)
+UDEFS += -DUSE_ADCS=1
+else
+UDEFS += -DUSE_ADCS=0
+endif
+ifeq ($(USE_ESC_TELEM),yes)
+UDEFS += -DUSE_ESC_TELEM=1
+else
+UDEFS += -DUSE_ESC_TELEM=0
+endif
+ifeq ($(USE_TFMINI),yes)
+UDEFS += -DUSE_TFMINI=1
+else
+UDEFS += -DUSE_TFMINI=0
+endif
+ifeq ($(USE_IE_FUELCELL),yes)
+UDEFS += -DUSE_IE_FUELCELL=1
+else
+UDEFS += -DUSE_IE_FUELCELL=0
+endif
+ifeq ($(USE_FAULHABER_CTRL),yes)
+UDEFS += -DUSE_FAULHABER_CTRL=1
+else
+UDEFS += -DUSE_FAULHABER_CTRL=0
+endif
 #UDEFS += -DCH_DBG_SYSTEM_STATE_CHECK=TRUE -DCH_DBG_ENABLE_CHECKS=TRUE -DCH_DBG_ENABLE_ASSERTS=TRUE
 #UDEFS += -DCH_DBG_ENABLE_STACK_CHECK=TRUE -DCH_DBG_FILL_THREADS=TRUE
 

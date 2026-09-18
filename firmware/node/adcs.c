@@ -34,9 +34,7 @@ struct adc_ntc_t {
 };
 
 static struct adc_ntc_t ntc1;
-static THD_WORKING_AREA(ntc1_wa, 512);
 static struct adc_ntc_t ntc2;
-static THD_WORKING_AREA(ntc2_wa, 512);
 
 struct adc_power_t {
   uint8_t device_id;
@@ -56,9 +54,7 @@ struct adc_power_t {
 };
 
 static struct adc_power_t power1;
-static THD_WORKING_AREA(power1_wa, 512);
 static struct adc_power_t power2;
-static THD_WORKING_AREA(power2_wa, 512);
 
 struct potmeter_t {
   uint8_t channel;
@@ -72,9 +68,7 @@ struct potmeter_t {
 };
 
 static struct potmeter_t potmeter1;
-static THD_WORKING_AREA(potmeter1_wa, 512);
 static struct potmeter_t potmeter2;
-static THD_WORKING_AREA(potmeter2_wa, 512);
 
 
 /**
@@ -470,26 +464,26 @@ void adcs_init(void) {
 
   // Start POWER transmitting threads
   if(power1.frequency > 0) {
-    chThdCreateStatic(power1_wa, sizeof(power1_wa), NORMALPRIO-22, power_thread, (void*)&power1);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "power1", NORMALPRIO-22, power_thread, (void*)&power1);
   }
   if(power2.frequency > 0) {
-    chThdCreateStatic(power2_wa, sizeof(power2_wa), NORMALPRIO-22, power_thread, (void*)&power2);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "power2", NORMALPRIO-22, power_thread, (void*)&power2);
   }
 
   // Start NTC transmitting threads
   if(ntc1.frequency > 0) {
-    chThdCreateStatic(ntc1_wa, sizeof(ntc1_wa), NORMALPRIO-21, ntc_thread, (void*)&ntc1);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "ntc1", NORMALPRIO-21, ntc_thread, (void*)&ntc1);
   }
   if(ntc2.frequency > 0) {
-    chThdCreateStatic(ntc2_wa, sizeof(ntc2_wa), NORMALPRIO-21, ntc_thread, (void*)&ntc2);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "ntc2", NORMALPRIO-21, ntc_thread, (void*)&ntc2);
   }
 
   // Start POTMETER transmitting threads
   if(potmeter1.frequency > 0) {
-    chThdCreateStatic(potmeter1_wa, sizeof(potmeter1_wa), NORMALPRIO-20, potmeter_thread, (void*)&potmeter1);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "potmeter1", NORMALPRIO-20, potmeter_thread, (void*)&potmeter1);
   }
   if(potmeter2.frequency > 0) {
-    chThdCreateStatic(potmeter2_wa, sizeof(potmeter2_wa), NORMALPRIO-20, potmeter_thread, (void*)&potmeter2);
+    chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "potmeter2", NORMALPRIO-20, potmeter_thread, (void*)&potmeter2);
   }
 }
 

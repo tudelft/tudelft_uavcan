@@ -4,8 +4,6 @@
 #include <stdlib.h>
 
 struct ie_fuelcell_t ie_fuelcell = {0};
-
-static THD_WORKING_AREA(ie_fuelcell_wa, 512);
 static THD_FUNCTION(ie_fuelcell_thd, arg) {
   (void)arg;
   chRegSetThreadName("ie_fuelcell");
@@ -121,7 +119,6 @@ static void ie_fuelcell_broadcast(void) {
   ie_fuelcell.data.received = false;
 }
 
-static THD_WORKING_AREA(ie_fuelcell_send_wa, 512);
 static THD_FUNCTION(ie_fuelcell_send_thd, arg) {
   (void)arg;
   chRegSetThreadName("ie_fuelcell_send");
@@ -156,7 +153,7 @@ void ie_fuelcell_init(void) {
     // Open the telemetry port and start the thread
     if(ie_fuelcell.port != NULL) {
         uartStart(ie_fuelcell.port, &ie_fuelcell.uart_cfg);
-        chThdCreateStatic(ie_fuelcell_wa, sizeof(ie_fuelcell_wa), NORMALPRIO-5, ie_fuelcell_thd, NULL);
-        chThdCreateStatic(ie_fuelcell_send_wa, sizeof(ie_fuelcell_send_wa), NORMALPRIO-6, ie_fuelcell_send_thd, NULL);
+            chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "ie_fc_rx", NORMALPRIO-5, ie_fuelcell_thd, NULL);
+            chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "ie_fc_tx", NORMALPRIO-6, ie_fuelcell_send_thd, NULL);
     }
 }

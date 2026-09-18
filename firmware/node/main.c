@@ -23,13 +23,25 @@
 #include "chprintf.h"
 #include "config.h"
 #include "uavcan.h"
+#if USE_ADCS
 #include "adcs.h"
+#endif
+#if USE_DRS_PARACHUTE
 #include "drs_parachute.h"
+#endif
 #include "servos.h"
+#if USE_FAULHABER_CTRL
 #include "faulhaber_ctrl.h"
+#endif
+#if USE_ESC_TELEM
 #include "esc_telem.h"
+#endif
+#if USE_TFMINI
 #include "tfmini.h"
+#endif
+#if USE_IE_FUELCELL
 #include "ie_fuelcell.h"
+#endif
 
 /*===========================================================================*/
 /* Generic code.                                                             */
@@ -58,13 +70,25 @@ int main(void) {
    */
   config_init();
   uavcanInit();
+#if USE_ADCS
   adcs_init();
+#endif
+#if USE_DRS_PARACHUTE
   drs_parachute_init();
+#endif
   servos_init();
+#if USE_FAULHABER_CTRL
   faulhaber_ctrl_init();
+#endif
+#if USE_ESC_TELEM
   esc_telem_init();
+#endif
+#if USE_TFMINI
   tfmini_init();
+#endif
+#if USE_IE_FUELCELL
   ie_fuelcell_init();
+#endif
 
   /*
    * Normal main() thread activity, spawning shells.

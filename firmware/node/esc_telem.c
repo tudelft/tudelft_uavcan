@@ -8,7 +8,6 @@ static void esc_telem_parse_tmotorf(uint8_t msg[], uint8_t len);
 static void esc_telem_parse_tmotor_flame(uint8_t msg[], uint8_t len);
 static void esc_telem_parse_tmotor_alpha(uint8_t msg[], uint8_t len);
 
-static THD_WORKING_AREA(esc_telem_wa, 512);
 static THD_FUNCTION(esc_telem_thd, arg) {
   (void)arg;
   chRegSetThreadName("esc_telem");
@@ -55,7 +54,6 @@ static void esc_telem_broadcast_status(void) {
   esc_telem.data.received = false;
 }
 
-static THD_WORKING_AREA(esc_telem_send_wa, 512);
 static THD_FUNCTION(esc_telem_send_thd, arg) {
   (void)arg;
   chRegSetThreadName("esc_telem");
@@ -95,8 +93,8 @@ void esc_telem_init(void) {
     // Open the telemetry port and start the thread
     if(esc_telem.port != NULL) {
         uartStart(esc_telem.port, &esc_telem.uart_cfg);
-        chThdCreateStatic(esc_telem_wa, sizeof(esc_telem_wa), NORMALPRIO-5, esc_telem_thd, NULL);
-        chThdCreateStatic(esc_telem_send_wa, sizeof(esc_telem_send_wa), NORMALPRIO-6, esc_telem_send_thd, NULL);
+        chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "esc_telem", NORMALPRIO-5, esc_telem_thd, NULL);
+        chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "esc_telem_send", NORMALPRIO-6, esc_telem_send_thd, NULL);
     }
 }
 

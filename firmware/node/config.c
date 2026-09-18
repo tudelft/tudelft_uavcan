@@ -4,6 +4,14 @@
 #include "flash.h"
 #include <chprintf.h>
 
+#ifndef FEETECH_MAX_SERVOS
+#define FEETECH_MAX_SERVOS 8
+#endif
+
+#if (FEETECH_MAX_SERVOS < 1) || (FEETECH_MAX_SERVOS > 8)
+#error "FEETECH_MAX_SERVOS must be between 1 and 8"
+#endif
+
 #define CONFIG_ADDR_CRC     (0x0803F000)
 #define CONFIG_ADDR         (CONFIG_ADDR_CRC + 0x8)
 
@@ -57,6 +65,54 @@ struct config_item_t config_items[] = {
     {.name = "SERVO10 failsafe", .type = CONFIG_TYPE_INT, .val.i = 1500, .def.i = 1500, .min.i = 0, .max.i = 2400},
 #endif
 
+/* Feetech STS UART servo configuration */
+    {.name = "FT baud", .type = CONFIG_TYPE_INT, .val.i = 1000000, .def.i = 1000000, .min.i = 38400, .max.i = 1000000},
+    {.name = "FT telem position frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0f, .max.f = 1000.0f},
+    {.name = "FT telem speed enable", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1},
+    {.name = "FT telem load enable", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1},
+    {.name = "FT telem current/temp frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0f, .max.f = 1000.0f},
+#if FEETECH_MAX_SERVOS >= 1
+    {.name = "FT1 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT1 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT1 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 2
+    {.name = "FT2 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT2 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT2 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 3
+    {.name = "FT3 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT3 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT3 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 4
+    {.name = "FT4 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT4 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT4 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 5
+    {.name = "FT5 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT5 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT5 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 6
+    {.name = "FT6 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT6 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT6 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 7
+    {.name = "FT7 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT7 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+#if FEETECH_MAX_SERVOS >= 8
+    {.name = "FT8 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
+    {.name = "FT8 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
+    {.name = "FT8 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+#endif
+
+#if USE_FAULHABER_CTRL
 /* FAULHABER configuration */
     {.name = "FAULHABER index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
     {.name = "FAULHABER port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
@@ -68,29 +124,39 @@ struct config_item_t config_items[] = {
     {.name = "FAULHABER deadband", .type = CONFIG_TYPE_INT, .val.i = 100, .def.i = 100, .min.i = 0, .max.i = INT32_MAX},
     {.name = "FAULHABER min position", .type = CONFIG_TYPE_INT, .val.i = 60000, .def.i = 60000, .min.i = 0, .max.i = INT32_MAX},
     {.name = "FAULHABER max position", .type = CONFIG_TYPE_INT, .val.i = 3450000, .def.i = 3450000, .min.i = 0, .max.i = INT32_MAX},
+#endif
 
+#if USE_ESC_TELEM
 /* ESC telemetry configuration */
     {.name = "ESC telem index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
     {.name = "ESC telem frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 10000},
     {.name = "ESC telem type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 2},
     {.name = "ESC telem port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "ESC telem pole pairs", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 1, .max.i = 1000},
+#endif
 
+#if USE_IE_FUELCELL
 /* IE Fuelcell configuration */
     {.name = "IE FC frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0001, .max.f = 10000},
     {.name = "IE FC port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "IE FC baud", .type = CONFIG_TYPE_INT, .val.i = 9600, .def.i = 9600, .min.i = 4800, .max.i = 1000000},
+#endif
 
+#if USE_DRS_PARACHUTE
 /* DRS configuration */
     {.name = "DRS index", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
     {.name = "DRS port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "DRS baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
+#endif
 
+#if USE_TFMINI
 /* TFMini configuration */
     {.name = "TFMINI port", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3},
     {.name = "TFMINI baudrate", .type = CONFIG_TYPE_INT, .val.i = 115200, .def.i = 115200, .min.i = 4800, .max.i = 1000000},
     {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 10000},
+#endif
 
+#if USE_ADCS
 /* POWER ADC's configuration */
     {.name = "POWER1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},
     {.name = "POWER1 frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 10000},
@@ -141,6 +207,7 @@ struct config_item_t config_items[] = {
     {.name = "POTMETER2 type", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 5},
     {.name = "POTMETER2 cal_a", .type = CONFIG_TYPE_FLOAT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 1000000},
     {.name = "POTMETER2 cal_b", .type = CONFIG_TYPE_FLOAT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1000000},
+#endif
 };
 uint16_t config_crc = 0;
 uint16_t config_crc_r1 = 0;

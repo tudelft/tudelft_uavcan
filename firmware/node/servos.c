@@ -1,6 +1,13 @@
 #include "servos.h"
 
 #include "config.h"
+#include "feetech_servos.h"
+#if USE_DRS_PARACHUTE
+#include "drs_parachute.h"
+#endif
+#if USE_FAULHABER_CTRL
+#include "faulhaber_ctrl.h"
+#endif
 
 #include <ch.h>
 #include <hal.h>
@@ -68,6 +75,8 @@ static struct servos_t servos = {
 
 static void servos_timeout_cb(virtual_timer_t *vtp __attribute__((unused)), void *p __attribute__((unused))) {
   // When no commands are received timeout and set everything to failsafe
+  feetech_servos_set_failsafe();
+
   uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
     servos.servo1_failsafe,
@@ -105,7 +114,6 @@ static void servos_timeout_cb(virtual_timer_t *vtp __attribute__((unused)), void
 
 void servos_init(void) {
   servos.node_timeout = config_get_by_name("SERVO failsafe timeout (ms)", 0)->val.i;
-
   // Read the servo settings
 #ifdef SERVO1_LINE
   servos.servo1_idx = config_get_by_name("SERVO1 index", 0)->val.i;
@@ -257,14 +265,17 @@ void servos_init(void) {
 #endif
   };
   board_set_servos(true, servo_values, sizeof(servo_values) / sizeof(uint16_t));
+  feetech_servos_init();
 
   // Initialize the servo timeout timer
   chVTObjectInit(&servos.timeout_vt);
+
   servos.initialized = true;
 }
 
 void servos_disable(void) {
   servos.initialized = false;
+  feetech_servos_disable();
   board_disable_servos();
 }
 
@@ -330,13 +341,14 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
   int16_t servo10_cmd = servo_cmd(servos.servo10_idx, &msg, servos.servo10_failsafe, servos.servo10_tmotor);
 #endif
 
-#include "faulhaber_ctrl.h"
+#if USE_FAULHABER_CTRL
   if(faulhaber_ctrl.port != NULL && faulhaber_ctrl.index < msg.cmd.len) {
     int64_t range = (faulhaber_ctrl.max_pos - faulhaber_ctrl.min_pos);
     faulhaber_ctrl.target_position = (uint64_t)faulhaber_ctrl.min_pos + ((msg.cmd.data[faulhaber_ctrl.index] + 8192)*range / (8191+8192));
   }
+#endif
 
-#include "drs_parachute.h"
+#if USE_DRS_PARACHUTE
   if(drs_parachute.port != NULL && drs_parachute.index < msg.cmd.len) {
     if(msg.cmd.data[drs_parachute.index] > 4000)
       drs_parachute_set(DRS_STATUS_RELEASE);
@@ -345,6 +357,7 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
     else
       drs_parachute_set(DRS_STATUS_ENABLE);
   }
+#endif
 
   // Commit the commands
   uint16_t servo_values[] = {
@@ -380,6 +393,9 @@ void handle_esc_rawcommand(struct uavcan_iface_t *iface __attribute__((unused)),
 #endif
   };
   board_set_servos(true, servo_values, sizeof(servo_values) / sizeof(uint16_t));
+
+  // Optional Feetech servos are mapped directly from RAW_COMMAND indices.
+  feetech_servos_apply_rawcommand(&msg);
 
   // Enable timeout
   chVTSet(&servos.timeout_vt, TIME_MS2I(servos.node_timeout), servos_timeout_cb, NULL);

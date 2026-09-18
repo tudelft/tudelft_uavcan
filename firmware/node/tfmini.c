@@ -107,7 +107,6 @@ static void tfmini_parse(uint8_t byte)
   }
 }
 
-static THD_WORKING_AREA(tfmini_wa, 1024);
 static THD_FUNCTION(tfmini_thd, arg) {
   (void)arg;
   chRegSetThreadName("tfmini");
@@ -153,6 +152,6 @@ void tfmini_init(void) {
     if(tfmini.port != NULL) {
         tfmini.parse_status = TFMINI_PARSE_IDLE;
         uartStart(tfmini.port, &tfmini.uart_cfg);
-        chThdCreateStatic(tfmini_wa, sizeof(tfmini_wa), NORMALPRIO-10, tfmini_thd, NULL);
+      chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(1024), "tfmini", NORMALPRIO-10, tfmini_thd, NULL);
     }
 }

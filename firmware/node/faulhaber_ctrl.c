@@ -30,7 +30,6 @@ struct faulhaber_ctrl_t faulhaber_ctrl = {0};
 static void faulhaber_parser(struct faulhaber_parser_t *p, uint8_t c);
 static void faulhaber_send_command(uint8_t cmd_code, uint8_t *data, uint8_t data_length) ;
 
-static THD_WORKING_AREA(faulhaber_ctrl_rx_wa, 512);
 static THD_FUNCTION(faulhaber_ctrl_rx_thd, arg) {
   (void)arg;
   chRegSetThreadName("faulhaber_ctrl_rx");
@@ -77,7 +76,6 @@ static THD_FUNCTION(faulhaber_ctrl_rx_thd, arg) {
   }
 }
 
-static THD_WORKING_AREA(faulhaber_ctrl_tx_wa, 1024);
 static THD_FUNCTION(faulhaber_ctrl_tx_thd, arg) {
   (void)arg;
   chRegSetThreadName("faulhaber_ctrl_tx");
@@ -187,7 +185,6 @@ static void faulhaber_ctrl_broadcast_status(void) {
       CANARD_TRANSFER_PRIORITY_LOW, buffer, total_size);
 }
 
-static THD_WORKING_AREA(faulhaber_ctrl_telem_send_wa, 256);
 static THD_FUNCTION(faulhaber_ctrl_telem_send_thd, arg) {
   (void)arg;
   chRegSetThreadName("faulhaber_ctrl_telem");
@@ -231,9 +228,9 @@ void faulhaber_ctrl_init(void) {
     // Open the telemetry port and start the thread
     if(faulhaber_ctrl.port != NULL) {
         uartStart(faulhaber_ctrl.port, &faulhaber_ctrl.uart_cfg);
-        chThdCreateStatic(faulhaber_ctrl_rx_wa, sizeof(faulhaber_ctrl_rx_wa), NORMALPRIO+1, faulhaber_ctrl_rx_thd, NULL);
-        chThdCreateStatic(faulhaber_ctrl_tx_wa, sizeof(faulhaber_ctrl_tx_wa), NORMALPRIO+2, faulhaber_ctrl_tx_thd, NULL);
-        chThdCreateStatic(faulhaber_ctrl_telem_send_wa, sizeof(faulhaber_ctrl_telem_send_wa), NORMALPRIO-6, faulhaber_ctrl_telem_send_thd, NULL);
+      chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(512), "faul_rx", NORMALPRIO+1, faulhaber_ctrl_rx_thd, NULL);
+      chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(1024), "faul_tx", NORMALPRIO+2, faulhaber_ctrl_tx_thd, NULL);
+      chThdCreateFromHeap(NULL, THD_WORKING_AREA_SIZE(256), "faul_telem", NORMALPRIO-6, faulhaber_ctrl_telem_send_thd, NULL);
     }
 }
 
