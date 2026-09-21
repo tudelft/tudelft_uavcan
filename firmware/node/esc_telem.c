@@ -66,11 +66,11 @@ static THD_FUNCTION(esc_telem_send_thd, arg) {
 
 void esc_telem_init(void) {
     // Get the configuration
-    esc_telem.index = config_get_by_name("ESC telem index", 0)->val.i;
-    esc_telem.vt_delay = 1000.f / config_get_by_name("ESC telem frequency", 0)->val.f;
-    esc_telem.type = config_get_by_name("ESC telem type", 0)->val.i;
-    esc_telem.pole_pairs = config_get_by_name("ESC telem pole pairs", 0)->val.i;
-    uint8_t port = config_get_by_name("ESC telem port", 0)->val.i;
+    esc_telem.index = config_get_u8("ESC telem index", 0);
+    esc_telem.vt_delay = 1000.f / config_get_f32("ESC telem frequency", 10.0f);
+    esc_telem.type = config_get_u8("ESC telem type", 0);
+    esc_telem.pole_pairs = config_get_u16("ESC telem pole pairs", 1);
+    uint8_t port = config_get_u8("ESC telem port", 0);
 
     // Change port settings based on type
     esc_telem.uart_cfg.speed = (esc_telem.type == 0)? 115200 : 19200;

@@ -133,12 +133,21 @@ int uavcanBroadcastAll(uint64_t data_type_signature,   ///< See above
 void uavcanDebug(uint8_t level, char *source, char *msg) {
   uint8_t buffer[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
 
-  struct uavcan_protocol_debug_LogMessage logMsg;
+  struct uavcan_protocol_debug_LogMessage logMsg = {0};
+  size_t source_len = 0;
+  size_t text_len = 0;
+
   logMsg.level.value = level;
-  strncpy((char*)logMsg.source.data, source, 31);
-  logMsg.source.len = strlen((char*)logMsg.source.data);
-  strncpy((char*)logMsg.text.data, msg, 90);
-  logMsg.text.len = strlen((char*)logMsg.text.data);
+  if (source != NULL) {
+    source_len = strnlen(source, sizeof(logMsg.source.data));
+    memcpy(logMsg.source.data, source, source_len);
+  }
+  logMsg.source.len = (uint8_t)source_len;
+  if (msg != NULL) {
+    text_len = strnlen(msg, sizeof(logMsg.text.data));
+    memcpy(logMsg.text.data, msg, text_len);
+  }
+  logMsg.text.len = (uint8_t)text_len;
 
   uint8_t debug_transfer_id = 111;
   uint32_t len = uavcan_protocol_debug_LogMessage_encode(&logMsg, buffer);
@@ -153,12 +162,21 @@ void uavcanDebug(uint8_t level, char *source, char *msg) {
 void uavcanDebugIface(struct uavcan_iface_t *iface, uint8_t level, char *source, char *msg) {
   uint8_t buffer[UAVCAN_PROTOCOL_DEBUG_LOGMESSAGE_MAX_SIZE];
 
-  struct uavcan_protocol_debug_LogMessage logMsg;
+  struct uavcan_protocol_debug_LogMessage logMsg = {0};
+  size_t source_len = 0;
+  size_t text_len = 0;
+
   logMsg.level.value = level;
-  strncpy((char*)logMsg.source.data, source, 31);
-  logMsg.source.len = strlen((char*)logMsg.source.data);
-  strncpy((char*)logMsg.text.data, msg, 90);
-  logMsg.text.len = strlen((char*)logMsg.text.data);
+  if (source != NULL) {
+    source_len = strnlen(source, sizeof(logMsg.source.data));
+    memcpy(logMsg.source.data, source, source_len);
+  }
+  logMsg.source.len = (uint8_t)source_len;
+  if (msg != NULL) {
+    text_len = strnlen(msg, sizeof(logMsg.text.data));
+    memcpy(logMsg.text.data, msg, text_len);
+  }
+  logMsg.text.len = (uint8_t)text_len;
 
   uint8_t debug_transfer_id = 111;
   uint32_t len = uavcan_protocol_debug_LogMessage_encode(&logMsg, buffer);
@@ -721,7 +739,7 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
     onTransferReceived, shouldAcceptTransfer, iface);
 
   // Set the node ID from the config
-  iface->node_id = config_get_by_name("NODE id", 0)->val.i;
+  iface->node_id = config_get_u8("NODE id", CANARD_BROADCAST_NODE_ID);
   if(iface->node_id != CANARD_BROADCAST_NODE_ID)
     canardSetLocalNodeID(&iface->canard, iface->node_id);
 
@@ -739,8 +757,8 @@ static void uavcanInitIface(struct uavcan_iface_t *iface) {
  */
 void uavcanInit(void) {
   // Get the configuration variables
-  can_termination = config_get_by_name("CAN termination", 0)->val.i;
-  uavcan_bridge = config_get_by_name("CAN bridge", 0)->val.i;
+  can_termination = config_get_u8("CAN termination", 0);
+  uavcan_bridge = config_get_u8("CAN bridge", 0);
 
 #if defined(CAN1_TERM_LINE) // High is closed
   if(can_termination & 0x1)

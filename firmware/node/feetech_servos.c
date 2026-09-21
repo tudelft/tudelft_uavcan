@@ -21,6 +21,10 @@
 #define FEETECH_INST_SYNC_WRITE 0x83U
 #define FEETECH_RAM_GOAL_POSITION_L 42U
 #define FEETECH_GOAL_DATA_LEN 2U
+#define FEETECH_STS_POS_MIN 0U
+#define FEETECH_STS_POS_MAX 4095U
+#define FEETECH_RAW_CMD_MIN (-8192)
+#define FEETECH_RAW_CMD_MAX 8191
 
 #define FEETECH_TEMP_TO_KELVIN_OFFSET 273.15f
 #define FEETECH_REG_PRESENT_POSITION 56U
@@ -54,6 +58,7 @@ struct feetech_servos_t {
     bool current_temp_enabled;
     bool fast_speed_enabled;
     bool fast_load_enabled;
+    bool pending_failsafe;
     uint32_t telemetry_delay_ms;
     uint32_t current_temp_divider;
     UARTConfig uart_cfg;
@@ -76,13 +81,6 @@ static const char *const feetech_failsafe_cfg_names[FEETECH_CFG_SLOTS] = {
     "FT1 failsafe", "FT2 failsafe", "FT3 failsafe", "FT4 failsafe", "FT5 failsafe", "FT6 failsafe", "FT7 failsafe", "FT8 failsafe"
 };
 
-static inline uint16_t clamp_u16(uint32_t value, uint16_t max) {
-    if (value > max) {
-        return max;
-    }
-    return (uint16_t)value;
-}
-
 static int16_t feetech_decode_signed_15bit(uint16_t raw) {
     int16_t value = (int16_t)(raw & 0x7FFFU);
     if ((raw & 0x8000U) != 0U) {
@@ -100,15 +98,22 @@ static float feetech_decode_signed_load(uint16_t raw) {
 }
 
 static uint16_t raw_to_sts_position(int16_t raw_cmd) {
-    int32_t shifted = (int32_t)raw_cmd + 8192;
-
-    if (shifted < 0) {
-        shifted = 0;
-    } else if (shifted > 16383) {
-        shifted = 16383;
+    if (raw_cmd < FEETECH_RAW_CMD_MIN) {
+        raw_cmd = FEETECH_RAW_CMD_MIN;
+    } else if (raw_cmd > FEETECH_RAW_CMD_MAX) {
+        raw_cmd = FEETECH_RAW_CMD_MAX;
     }
 
-    return (uint16_t)((shifted * 4095) / 16383);
+    int32_t shifted = (int32_t)raw_cmd + 8192;
+    int32_t sts_pos = (shifted * (int32_t)FEETECH_STS_POS_MAX) / 16383;
+
+    if (sts_pos > (int32_t)FEETECH_STS_POS_MAX) {
+        sts_pos = FEETECH_STS_POS_MAX;
+    } else if (sts_pos < (int32_t)FEETECH_STS_POS_MIN) {
+        sts_pos = FEETECH_STS_POS_MIN;
+    }
+
+    return (uint16_t)sts_pos;
 }
 
 static uint8_t feetech_checksum(const uint8_t *frame, uint8_t last_idx) {
@@ -166,10 +171,10 @@ static bool feetech_load_channel_from_config(uint8_t cfg_idx, struct feetech_ser
         return false;
     }
 
-    bus_id = clamp_u16((uint32_t)config_get_by_name((char *)feetech_busid_cfg_names[cfg_idx], 0)->val.i, 3253);
+    bus_id = config_get_u16(feetech_busid_cfg_names[cfg_idx], 0);
     bus = (uint8_t)(bus_id / 1000U);
     id = (uint8_t)(bus_id % 1000U);
-    index = (uint8_t)config_get_by_name((char *)feetech_index_cfg_names[cfg_idx], 0)->val.i;
+    index = config_get_u8(feetech_index_cfg_names[cfg_idx], 0);
 
     if (bus < 1U || bus > FEETECH_MAX_BUSES || id == 0U || id >= FEETECH_BROADCAST_ID || index == 0xFFU) {
         return false;
@@ -181,14 +186,14 @@ static bool feetech_load_channel_from_config(uint8_t cfg_idx, struct feetech_ser
     out->timeout_count = 0;
     out->position_poll_count = 0;
     out->last_pos = 0xFFFFU;
-    out->failsafe = clamp_u16((uint32_t)config_get_by_name((char *)feetech_failsafe_cfg_names[cfg_idx], 0)->val.i, 4095);
+    out->failsafe = config_get_u16(feetech_failsafe_cfg_names[cfg_idx], 0);
     out->temperature_device_id = (uint16_t)(1000U + out->id);
 
     out->enabled = true;
     return true;
 }
 
-static void feetech_send_targets_bus(uint8_t bus_idx, const uint16_t positions[FEETECH_MAX_SERVOS], bool force_send) {
+static void feetech_send_targets_bus(uint8_t bus_idx, const uint16_t positions[FEETECH_MAX_SERVOS]) {
     struct feetech_bus_t *bus = &feetech_servos.buses[bus_idx];
     if (!feetech_servos.initialized || !bus->active || bus->port == NULL) {
         return;
@@ -202,24 +207,6 @@ static void feetech_send_targets_bus(uint8_t bus_idx, const uint16_t positions[F
     }
 
     if (active == 0) {
-        return;
-    }
-
-    bool changed = force_send;
-    if (!changed) {
-        for (uint8_t i = 0; i < FEETECH_MAX_SERVOS; i++) {
-            if (!feetech_servos.channels[i].enabled || feetech_servos.channels[i].bus != bus_idx) {
-                continue;
-            }
-
-            if (feetech_servos.channels[i].last_pos != positions[i]) {
-                changed = true;
-                break;
-            }
-        }
-    }
-
-    if (!changed) {
         return;
     }
 
@@ -240,7 +227,7 @@ static void feetech_send_targets_bus(uint8_t bus_idx, const uint16_t positions[F
             continue;
         }
 
-        const uint16_t pos = clamp_u16(positions[i], 4095);
+        const uint16_t pos = positions[i];
 
         frame[idx++] = feetech_servos.channels[i].id;
         frame[idx++] = (uint8_t)(pos & 0xFF);
@@ -276,7 +263,7 @@ static bool feetech_read_data(struct feetech_bus_t *bus, uint8_t servo_id, uint8
     uint8_t rx[32];
     size_t dummy = sizeof(rx);
     size_t tx_size = sizeof(req);
-    size_t rx_size = sizeof(rx);
+    size_t rx_size = (size_t)(data_len + 6U);
 
     chMtxLock(&feetech_servos.io_mutex);
     uartReceiveTimeout(bus->port, &dummy, rx, TIME_IMMEDIATE);
@@ -385,6 +372,15 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
     }
 }
 
+static void feetech_service_pending_failsafe(void) {
+    if (!feetech_servos.pending_failsafe) {
+        return;
+    }
+
+    feetech_servos.pending_failsafe = false;
+    feetech_servos_set_failsafe();
+}
+
 static void feetech_poll_channel(struct feetech_servo_channel_t *ch) {
     struct feetech_bus_t *bus;
     uint8_t data[2];
@@ -460,6 +456,8 @@ static THD_FUNCTION(feetech_telem_thd, arg) {
     chRegSetThreadName("ft_telem");
 
     while (true) {
+        feetech_service_pending_failsafe();
+
         if (!feetech_servos.initialized || !feetech_servos.telemetry_enabled) {
             chThdSleepMilliseconds(200);
             continue;
@@ -505,7 +503,7 @@ void feetech_servos_apply_rawcommand(const struct uavcan_equipment_esc_RawComman
     }
 
     for (uint8_t bus_idx = 1; bus_idx <= FEETECH_MAX_BUSES; bus_idx++) {
-        feetech_send_targets_bus(bus_idx, targets, false);
+        feetech_send_targets_bus(bus_idx, targets);
     }
 }
 
@@ -519,7 +517,7 @@ void feetech_servos_set_failsafe(void) {
     }
 
     for (uint8_t bus_idx = 1; bus_idx <= FEETECH_MAX_BUSES; bus_idx++) {
-        feetech_send_targets_bus(bus_idx, targets, true);
+        feetech_send_targets_bus(bus_idx, targets);
     }
 }
 
@@ -527,15 +525,19 @@ void feetech_servos_disable(void) {
     feetech_servos.initialized = false;
 }
 
+void feetech_servos_request_failsafe(void) {
+    feetech_servos.pending_failsafe = true;
+}
+
 void feetech_servos_init(void) {
     memset(&feetech_servos, 0, sizeof(feetech_servos));
 
     chMtxObjectInit(&feetech_servos.io_mutex);
 
-    float telem_freq = config_get_by_name("FT telem position frequency", 0)->val.f;
-    float current_temp_freq = config_get_by_name("FT telem current/temp frequency", 0)->val.f;
-    feetech_servos.fast_speed_enabled = (config_get_by_name("FT telem speed enable", 0)->val.i != 0);
-    feetech_servos.fast_load_enabled = (config_get_by_name("FT telem load enable", 0)->val.i != 0);
+    float telem_freq = config_get_f32("FT telem position frequency", 0.0f);
+    float current_temp_freq = config_get_f32("FT telem current/temp frequency", 0.0f);
+    feetech_servos.fast_speed_enabled = config_get_bool("FT telem speed enable", false);
+    feetech_servos.fast_load_enabled = config_get_bool("FT telem load enable", false);
     if (telem_freq > 0.0f) {
         feetech_servos.telemetry_enabled = true;
         feetech_servos.telemetry_delay_ms = (uint32_t)(1000.0f / telem_freq);
@@ -562,7 +564,7 @@ void feetech_servos_init(void) {
         feetech_servos.buses[i].active = false;
     }
 
-    feetech_servos.uart_cfg.speed = config_get_by_name("FT baud", 0)->val.i;
+    feetech_servos.uart_cfg.speed = config_get_u32("FT baud", 1000000);
     feetech_servos.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
     feetech_servos.uart_cfg.cr2 = 0;
     feetech_servos.uart_cfg.cr3 = USART_CR3_HDSEL;

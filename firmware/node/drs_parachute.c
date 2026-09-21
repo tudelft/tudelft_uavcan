@@ -156,12 +156,12 @@ void drs_parachute_set(enum parachute_status_t status) {
 
 void drs_parachute_init(void) {
     // Get the configuration
-    drs_parachute.index = config_get_by_name("DRS index", 0)->val.i;
-    drs_parachute.uart_cfg.speed = config_get_by_name("DRS baudrate", 0)->val.i;
+    drs_parachute.index = config_get_u8("DRS index", 0);
+    drs_parachute.uart_cfg.speed = config_get_u32("DRS baudrate", 115200);
     drs_parachute.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
-    uint8_t port = config_get_by_name("DRS port", 0)->val.i;
+    uint8_t port = config_get_u8("DRS port", 0);
     if(port == 1) {
         palSetLineMode(SERIAL1_RX_LINE, PAL_MODE_INPUT);
         palSetLineMode(SERIAL1_TX_LINE, PAL_MODE_STM32_ALTERNATE_PUSHPULL);

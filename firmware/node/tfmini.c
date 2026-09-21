@@ -126,12 +126,12 @@ static THD_FUNCTION(tfmini_thd, arg) {
 
 void tfmini_init(void) {
     // Get the configuration
-    tfmini.frequency = config_get_by_name("TFMINI frequency", 0)->val.f;
-    tfmini.uart_cfg.speed = config_get_by_name("TFMINI baudrate", 0)->val.i;
+    tfmini.frequency = config_get_f32("TFMINI frequency", 0.0f);
+    tfmini.uart_cfg.speed = config_get_u32("TFMINI baudrate", 115200);
     tfmini.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
-    uint8_t port = config_get_by_name("TFMINI port", 0)->val.i;
+    uint8_t port = config_get_u8("TFMINI port", 0);
     if(port == 1) {
         palSetLineMode(SERIAL1_RX_LINE, PAL_MODE_INPUT);
         palSetLineMode(SERIAL1_TX_LINE, PAL_MODE_STM32_ALTERNATE_PUSHPULL);

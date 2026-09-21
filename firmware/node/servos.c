@@ -75,7 +75,7 @@ static struct servos_t servos = {
 
 static void servos_timeout_cb(virtual_timer_t *vtp __attribute__((unused)), void *p __attribute__((unused))) {
   // When no commands are received timeout and set everything to failsafe
-  feetech_servos_set_failsafe();
+  feetech_servos_request_failsafe();
 
   uint16_t servo_values[] = {
 #ifdef SERVO1_LINE
@@ -113,83 +113,83 @@ static void servos_timeout_cb(virtual_timer_t *vtp __attribute__((unused)), void
 }
 
 void servos_init(void) {
-  servos.node_timeout = config_get_by_name("SERVO failsafe timeout (ms)", 0)->val.i;
+  servos.node_timeout = config_get_u32("SERVO failsafe timeout (ms)", 100);
   // Read the servo settings
 #ifdef SERVO1_LINE
-  servos.servo1_idx = config_get_by_name("SERVO1 index", 0)->val.i;
-  servos.servo1_failsafe = config_get_by_name("SERVO1 failsafe", 0)->val.i;
+  servos.servo1_idx = config_get_u8("SERVO1 index", 255);
+  servos.servo1_failsafe = config_get_u16("SERVO1 failsafe", 1000);
   if(servos.servo1_idx >= 100 && servos.servo1_idx != 255) {
     servos.servo1_idx -= 100;
     servos.servo1_tmotor = true;
   }
 #endif
 #ifdef SERVO2_LINE
-  servos.servo2_idx = config_get_by_name("SERVO2 index", 0)->val.i;
-  servos.servo2_failsafe = config_get_by_name("SERVO2 failsafe", 0)->val.i;
+  servos.servo2_idx = config_get_u8("SERVO2 index", 255);
+  servos.servo2_failsafe = config_get_u16("SERVO2 failsafe", 1500);
   if(servos.servo2_idx >= 100 && servos.servo2_idx != 255) {
     servos.servo2_idx -= 100;
     servos.servo2_tmotor = true;
   }
 #endif
 #ifdef SERVO3_LINE
-  servos.servo3_idx = config_get_by_name("SERVO3 index", 0)->val.i;
-  servos.servo3_failsafe = config_get_by_name("SERVO3 failsafe", 0)->val.i;
+  servos.servo3_idx = config_get_u8("SERVO3 index", 255);
+  servos.servo3_failsafe = config_get_u16("SERVO3 failsafe", 1500);
   if(servos.servo3_idx >= 100 && servos.servo3_idx != 255) {
     servos.servo3_idx -= 100;
     servos.servo3_tmotor = true;
   }
 #endif
 #ifdef SERVO4_LINE
-  servos.servo4_idx = config_get_by_name("SERVO4 index", 0)->val.i;
-  servos.servo4_failsafe = config_get_by_name("SERVO4 failsafe", 0)->val.i;
+  servos.servo4_idx = config_get_u8("SERVO4 index", 255);
+  servos.servo4_failsafe = config_get_u16("SERVO4 failsafe", 1500);
   if(servos.servo4_idx >= 100 && servos.servo4_idx != 255) {
     servos.servo4_idx -= 100;
     servos.servo4_tmotor = true;
   }
 #endif
 #ifdef SERVO5_LINE
-  servos.servo5_idx = config_get_by_name("SERVO5 index", 0)->val.i;
-  servos.servo5_failsafe = config_get_by_name("SERVO5 failsafe", 0)->val.i;
+  servos.servo5_idx = config_get_u8("SERVO5 index", 255);
+  servos.servo5_failsafe = config_get_u16("SERVO5 failsafe", 1500);
   if(servos.servo5_idx >= 100 && servos.servo5_idx != 255) {
     servos.servo5_idx -= 100;
     servos.servo5_tmotor = true;
   }
 #endif
 #ifdef SERVO6_LINE
-  servos.servo6_idx = config_get_by_name("SERVO6 index", 0)->val.i;
-  servos.servo6_failsafe = config_get_by_name("SERVO6 failsafe", 0)->val.i;
+  servos.servo6_idx = config_get_u8("SERVO6 index", 255);
+  servos.servo6_failsafe = config_get_u16("SERVO6 failsafe", 1500);
   if(servos.servo6_idx >= 100 && servos.servo6_idx != 255) {
     servos.servo6_idx -= 100;
     servos.servo6_tmotor = true;
   }
 #endif
 #ifdef SERVO7_LINE
-  servos.servo7_idx = config_get_by_name("SERVO7 index", 0)->val.i;
-  servos.servo7_failsafe = config_get_by_name("SERVO7 failsafe", 0)->val.i;
+  servos.servo7_idx = config_get_u8("SERVO7 index", 255);
+  servos.servo7_failsafe = config_get_u16("SERVO7 failsafe", 1500);
   if(servos.servo7_idx >= 100 && servos.servo7_idx != 255) {
     servos.servo7_idx -= 100;
     servos.servo7_tmotor = true;
   }
 #endif
 #ifdef SERVO8_LINE
-  servos.servo8_idx = config_get_by_name("SERVO8 index", 0)->val.i;
-  servos.servo8_failsafe = config_get_by_name("SERVO8 failsafe", 0)->val.i;
+  servos.servo8_idx = config_get_u8("SERVO8 index", 255);
+  servos.servo8_failsafe = config_get_u16("SERVO8 failsafe", 1500);
   if(servos.servo8_idx >= 100 && servos.servo8_idx != 255) {
     servos.servo8_idx -= 100;
     servos.servo8_tmotor = true;
   }
 #endif
 #ifdef SERVO9_LINE
-  servos.servo9_idx = config_get_by_name("SERVO9 index", 0)->val.i;
-  servos.servo9_failsafe = config_get_by_name("SERVO9 failsafe", 0)->val.i;
+  servos.servo9_idx = config_get_u8("SERVO9 index", 255);
+  servos.servo9_failsafe = config_get_u16("SERVO9 failsafe", 1500);
   if(servos.servo9_idx >= 100 && servos.servo9_idx != 255) {
     servos.servo9_idx -= 100;
     servos.servo9_tmotor = true;
   }
 #endif
 #ifdef SERVO10_LINE
-  servos.servo10_idx = config_get_by_name("SERVO10 index", 0)->val.i;
-  servos.servo10_failsafe = config_get_by_name("SERVO10 failsafe", 0)->val.i;
+  servos.servo10_idx = config_get_u8("SERVO10 index", 255);
+  servos.servo10_failsafe = config_get_u16("SERVO10 failsafe", 1500);
   if(servos.servo10_idx >= 100 && servos.servo10_idx != 255) {
     servos.servo10_idx -= 100;
     servos.servo10_tmotor = true;

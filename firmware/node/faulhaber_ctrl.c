@@ -196,19 +196,19 @@ static THD_FUNCTION(faulhaber_ctrl_telem_send_thd, arg) {
 
 void faulhaber_ctrl_init(void) {
     // Get the configuration
-    faulhaber_ctrl.index = config_get_by_name("FAULHABER index", 0)->val.i;
-    faulhaber_ctrl.telem_vt_delay = 1000.f / config_get_by_name("FAULHABER telem frequency", 0)->val.f;
-    faulhaber_ctrl.node_nb = config_get_by_name("FAULHABER node number", 0)->val.i;
-    faulhaber_ctrl.start_timeout_s = config_get_by_name("FAULHABER start timeout (s)", 0)->val.i;
-    faulhaber_ctrl.home_method = config_get_by_name("FAULHABER home method", 0)->val.i;
-    faulhaber_ctrl.deadband = config_get_by_name("FAULHABER deadband", 0)->val.i;
-    faulhaber_ctrl.min_pos = config_get_by_name("FAULHABER min position", 0)->val.i;
-    faulhaber_ctrl.max_pos = config_get_by_name("FAULHABER max position", 0)->val.i;
-    faulhaber_ctrl.uart_cfg.speed = config_get_by_name("FAULHABER baudrate", 0)->val.i;
+    faulhaber_ctrl.index = config_get_u8("FAULHABER index", 0);
+    faulhaber_ctrl.telem_vt_delay = 1000.f / config_get_f32("FAULHABER telem frequency", 10.0f);
+    faulhaber_ctrl.node_nb = config_get_u8("FAULHABER node number", 1);
+    faulhaber_ctrl.start_timeout_s = config_get_u32("FAULHABER start timeout (s)", 5);
+    faulhaber_ctrl.home_method = config_get_u8("FAULHABER home method", 19);
+    faulhaber_ctrl.deadband = config_get_u32("FAULHABER deadband", 100);
+    faulhaber_ctrl.min_pos = config_get_u32("FAULHABER min position", 60000);
+    faulhaber_ctrl.max_pos = config_get_u32("FAULHABER max position", 3450000);
+    faulhaber_ctrl.uart_cfg.speed = config_get_u32("FAULHABER baudrate", 115200);
     faulhaber_ctrl.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE | USART_CR1_TE;
 
     // Configure the port
-    uint8_t port = config_get_by_name("FAULHABER port", 0)->val.i;
+    uint8_t port = config_get_u8("FAULHABER port", 0);
     if(port == 1) {
         palSetLineMode(SERIAL1_RX_LINE, PAL_MODE_INPUT);
         palSetLineMode(SERIAL1_TX_LINE, PAL_MODE_STM32_ALTERNATE_PUSHPULL);

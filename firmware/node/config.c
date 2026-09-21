@@ -68,48 +68,48 @@ struct config_item_t config_items[] = {
 /* Feetech STS UART servo configuration */
     {.name = "FT baud", .type = CONFIG_TYPE_INT, .val.i = 1000000, .def.i = 1000000, .min.i = 38400, .max.i = 1000000},
     {.name = "FT telem position frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 10, .def.f = 10, .min.f = 0.0f, .max.f = 1000.0f},
-    {.name = "FT telem speed enable", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1},
-    {.name = "FT telem load enable", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 0, .max.i = 1},
+    {.name = "FT telem speed enable", .type = CONFIG_TYPE_BOOL, .val.b = 1, .def.b = 1, .min.i = 0, .max.i = 1},
+    {.name = "FT telem load enable", .type = CONFIG_TYPE_BOOL, .val.b = 1, .def.b = 1, .min.i = 0, .max.i = 1},
     {.name = "FT telem current/temp frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0f, .max.f = 1000.0f},
 #if FEETECH_MAX_SERVOS >= 1
     {.name = "FT1 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT1 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT1 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT1 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 2
     {.name = "FT2 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT2 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT2 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT2 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 3
     {.name = "FT3 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT3 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT3 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT3 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 4
     {.name = "FT4 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT4 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT4 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT4 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 5
     {.name = "FT5 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT5 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT5 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT5 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 6
     {.name = "FT6 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT6 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT6 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT6 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 7
     {.name = "FT7 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT7 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT7 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 #if FEETECH_MAX_SERVOS >= 8
     {.name = "FT8 bus+id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 3253},
     {.name = "FT8 index", .type = CONFIG_TYPE_INT, .val.i = 255, .def.i = 255, .min.i = 0, .max.i = 255},
-    {.name = "FT8 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2048, .def.i = 2048, .min.i = 0, .max.i = 4095},
+    {.name = "FT8 failsafe", .type = CONFIG_TYPE_INT, .val.i = 2047, .def.i = 2047, .min.i = 0, .max.i = 4095},
 #endif
 
 #if USE_FAULHABER_CTRL
@@ -293,6 +293,74 @@ struct config_item_t *config_get_by_name(char* name, uint8_t len) {
     return NULL;
 }
 
+int16_t config_get_i16(const char *name, int16_t default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    return (int16_t)item->val.i;
+}
+
+uint8_t config_get_u8(const char *name, uint8_t default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    return (uint8_t)item->val.i;
+}
+
+uint16_t config_get_u16(const char *name, uint16_t default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    return (uint16_t)item->val.i;
+}
+
+uint32_t config_get_u32(const char *name, uint32_t default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    return (uint32_t)item->val.i;
+}
+
+float config_get_f32(const char *name, float default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    return item->val.f;
+}
+
+bool config_get_bool(const char *name, bool default_value) {
+    struct config_item_t *item = config_get_by_name((char *)name, 0);
+
+    if (item == NULL) {
+        return default_value;
+    }
+
+    if (item->type == CONFIG_TYPE_BOOL) {
+        return item->val.b != 0U;
+    }
+
+    if (item->type == CONFIG_TYPE_INT) {
+        return item->val.i != 0;
+    }
+
+    return default_value;
+}
+
 static void config_set_resp(struct config_item_t *item, struct uavcan_protocol_param_GetSetResponse *resp) {
     memcpy(resp->name.data, item->name, strlen(item->name));
     resp->name.len = strlen(item->name);
@@ -367,21 +435,25 @@ void handle_param_getset(struct uavcan_iface_t *iface, CanardRxTransfer* transfe
 
     // If we did find the config item
     if(item != NULL) {
-        // We want to nupdate the value
-        if (req.value.union_tag == item->type) {
-            switch(item->type) {
-                case CONFIG_TYPE_INT:
+        // Apply requested value when incoming type matches the config item type.
+        switch(item->type) {
+            case CONFIG_TYPE_INT:
+                if (req.value.union_tag == UAVCAN_PROTOCOL_PARAM_VALUE_INTEGER_VALUE) {
                     item->val.i = req.value.integer_value;
-                    resp.value.union_tag = item->type;
-                    resp.value.integer_value = item->val.i;
-                    break;
-                case CONFIG_TYPE_FLOAT:
+                }
+                break;
+            case CONFIG_TYPE_FLOAT:
+                if (req.value.union_tag == UAVCAN_PROTOCOL_PARAM_VALUE_REAL_VALUE) {
                     item->val.f = req.value.real_value;
-                    resp.value.union_tag = item->type;
-                    resp.value.real_value = item->val.f;
-                default:
-                    break;
-            }
+                }
+                break;
+            case CONFIG_TYPE_BOOL:
+                if (req.value.union_tag == UAVCAN_PROTOCOL_PARAM_VALUE_BOOLEAN_VALUE) {
+                    item->val.b = req.value.boolean_value;
+                }
+                break;
+            default:
+                break;
         }
 
         // Set the response

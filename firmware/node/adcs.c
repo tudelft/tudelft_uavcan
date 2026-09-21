@@ -229,7 +229,7 @@ static THD_FUNCTION(power_thread, p) {
   uint64_t vt_delay = 1000.f / power->frequency;
   while(true) {
     // Calculate the current
-    float raw_adc, current, voltage = 0;
+    float raw_adc = 0.0f, current = 0.0f, voltage = 0.0f;
     if(power->current_channel >= 0 && adc1_buffers[power->current_channel_idx].av_nb_sample > 0) {
       raw_adc = (adc1_buffers[power->current_channel_idx].sum / adc1_buffers[power->current_channel_idx].av_nb_sample);
       current = (raw_adc / 4095) * 3.3 * power->current_mult + power->current_offset;
@@ -363,14 +363,14 @@ void adcs_init(void) {
 #endif
 
   /* Define the power inputs */
-  power1.device_id = config_get_by_name("POWER1 device id", 0)->val.i;
-  power1.frequency = config_get_by_name("POWER1 frequency", 0)->val.f;
-  power1.power_channel = config_get_by_name("POWER1 volt chan", 0)->val.i;
-  power1.current_channel = config_get_by_name("POWER1 current chan", 0)->val.i;
-  power1.power_mult = config_get_by_name("POWER1 volt mult", 0)->val.f;
-  power1.power_offset = config_get_by_name("POWER1 volt offset", 0)->val.f;
-  power1.current_mult = config_get_by_name("POWER1 current mult", 0)->val.f;
-  power1.current_offset = config_get_by_name("POWER1 current offset", 0)->val.f;
+  power1.device_id = config_get_u8("POWER1 device id", 0);
+  power1.frequency = config_get_f32("POWER1 frequency", 0.0f);
+  power1.power_channel = config_get_i16("POWER1 volt chan", ADC_POWER1_CHANNEL);
+  power1.current_channel = config_get_i16("POWER1 current chan", -1);
+  power1.power_mult = config_get_f32("POWER1 volt mult", ADC_POWER1_MUL);
+  power1.power_offset = config_get_f32("POWER1 volt offset", 0.0f);
+  power1.current_mult = config_get_f32("POWER1 current mult", 50.0f);
+  power1.current_offset = config_get_f32("POWER1 current offset", 0.0f);
 
   if(power1.frequency > 0 && adc1_chan_config[power1.power_channel].available) {
     power1.power_channel_idx = adc1_num_channels++;
@@ -383,14 +383,14 @@ void adcs_init(void) {
     palSetLineMode(adc1_chan_config[power1.current_channel].line, PAL_MODE_INPUT_ANALOG);
   }
 
-  power2.device_id = config_get_by_name("POWER2 device id", 0)->val.i;
-  power2.frequency = config_get_by_name("POWER2 frequency", 0)->val.f;
-  power2.power_channel = config_get_by_name("POWER2 volt chan", 0)->val.i;
-  power2.current_channel = config_get_by_name("POWER2 current chan", 0)->val.i;
-  power2.power_mult = config_get_by_name("POWER2 volt mult", 0)->val.f;
-  power2.power_offset = config_get_by_name("POWER2 volt offset", 0)->val.f;
-  power2.current_mult = config_get_by_name("POWER2 current mult", 0)->val.f;
-  power2.current_offset = config_get_by_name("POWER2 current offset", 0)->val.f;
+  power2.device_id = config_get_u8("POWER2 device id", 0);
+  power2.frequency = config_get_f32("POWER2 frequency", 0.0f);
+  power2.power_channel = config_get_i16("POWER2 volt chan", ADC_POWER2_CHANNEL);
+  power2.current_channel = config_get_i16("POWER2 current chan", -1);
+  power2.power_mult = config_get_f32("POWER2 volt mult", ADC_POWER2_MUL);
+  power2.power_offset = config_get_f32("POWER2 volt offset", 0.0f);
+  power2.current_mult = config_get_f32("POWER2 current mult", 50.0f);
+  power2.current_offset = config_get_f32("POWER2 current offset", 0.0f);
 
   if(power2.frequency > 0 && adc1_chan_config[power2.power_channel].available) {
     power2.power_channel_idx = adc1_num_channels++;
@@ -404,26 +404,26 @@ void adcs_init(void) {
   }
 
   /* Possible NTC inputs */
-  ntc1.device_id = config_get_by_name("NTC1 device id", 0)->val.i;
-  ntc1.channel = config_get_by_name("NTC1 channel", 0)->val.i;
-  ntc1.frequency = config_get_by_name("NTC1 frequency", 0)->val.f;
-  ntc1.pullup_r = config_get_by_name("NTC1 pull up R", 0)->val.f;
-  ntc1.she_a = config_get_by_name("NTC1 SH eq a", 0)->val.f;
-  ntc1.she_b = config_get_by_name("NTC1 SH eq b", 0)->val.f;
-  ntc1.she_c = config_get_by_name("NTC1 SH eq c", 0)->val.f;
+  ntc1.device_id = config_get_u8("NTC1 device id", 0);
+  ntc1.channel = config_get_u8("NTC1 channel", 0);
+  ntc1.frequency = config_get_f32("NTC1 frequency", 0.0f);
+  ntc1.pullup_r = config_get_f32("NTC1 pull up R", 10000.0f);
+  ntc1.she_a = config_get_f32("NTC1 SH eq a", 0.00103753243f);
+  ntc1.she_b = config_get_f32("NTC1 SH eq b", 0.00025150905f);
+  ntc1.she_c = config_get_f32("NTC1 SH eq c", 0.0f);
   if(ntc1.frequency > 0 && adc1_chan_config[ntc1.channel].available) {
     ntc1.channel_idx = adc1_num_channels++;
     adc1_channel_map[ntc1.channel_idx] = adc1_chan_config[ntc1.channel].channel;
     palSetLineMode(adc1_chan_config[ntc1.channel].line, PAL_MODE_INPUT_ANALOG);
   }
 
-  ntc2.device_id = config_get_by_name("NTC2 device id", 0)->val.i;
-  ntc2.channel = config_get_by_name("NTC2 channel", 0)->val.i;
-  ntc2.frequency = config_get_by_name("NTC2 frequency", 0)->val.f;
-  ntc2.pullup_r = config_get_by_name("NTC2 pull up R", 0)->val.f;
-  ntc2.she_a = config_get_by_name("NTC2 SH eq a", 0)->val.f;
-  ntc2.she_b = config_get_by_name("NTC2 SH eq b", 0)->val.f;
-  ntc2.she_c = config_get_by_name("NTC2 SH eq c", 0)->val.f;
+  ntc2.device_id = config_get_u8("NTC2 device id", 0);
+  ntc2.channel = config_get_u8("NTC2 channel", 0);
+  ntc2.frequency = config_get_f32("NTC2 frequency", 0.0f);
+  ntc2.pullup_r = config_get_f32("NTC2 pull up R", 10000.0f);
+  ntc2.she_a = config_get_f32("NTC2 SH eq a", 0.00103753243f);
+  ntc2.she_b = config_get_f32("NTC2 SH eq b", 0.00025150905f);
+  ntc2.she_c = config_get_f32("NTC2 SH eq c", 0.0f);
   if(ntc2.frequency > 0 && adc1_chan_config[ntc2.channel].available) {
     ntc2.channel_idx = adc1_num_channels++;
     adc1_channel_map[ntc2.channel_idx] = adc1_chan_config[ntc2.channel].channel;
@@ -431,24 +431,24 @@ void adcs_init(void) {
   }
 
   /* Possible POTMETER inputs */
-  potmeter1.device_id = config_get_by_name("POTMETER1 device id", 0)->val.i;
-  potmeter1.channel = config_get_by_name("POTMETER1 channel", 0)->val.i;
-  potmeter1.frequency = config_get_by_name("POTMETER1 frequency", 0)->val.f;
-  potmeter1.type = config_get_by_name("POTMETER1 type", 0)->val.i;
-  potmeter1.cal_a = config_get_by_name("POTMETER1 cal_a", 0)->val.f;
-  potmeter1.cal_b = config_get_by_name("POTMETER1 cal_b", 0)->val.f;
+  potmeter1.device_id = config_get_u8("POTMETER1 device id", 0);
+  potmeter1.channel = config_get_u8("POTMETER1 channel", 0);
+  potmeter1.frequency = config_get_f32("POTMETER1 frequency", 0.0f);
+  potmeter1.type = config_get_u8("POTMETER1 type", 0);
+  potmeter1.cal_a = config_get_f32("POTMETER1 cal_a", 0.0f);
+  potmeter1.cal_b = config_get_f32("POTMETER1 cal_b", 1.0f);
   if(potmeter1.frequency > 0 && adc1_chan_config[potmeter1.channel].available) {
     potmeter1.channel_idx = adc1_num_channels++;
     adc1_channel_map[potmeter1.channel_idx] = adc1_chan_config[potmeter1.channel].channel;
     palSetLineMode(adc1_chan_config[potmeter1.channel].line, PAL_MODE_INPUT_ANALOG);
   }
 
-  potmeter2.device_id = config_get_by_name("POTMETER2 device id", 0)->val.i;
-  potmeter2.channel = config_get_by_name("POTMETER2 channel", 0)->val.i;
-  potmeter2.frequency = config_get_by_name("POTMETER2 frequency", 0)->val.f;
-  potmeter2.type = config_get_by_name("POTMETER2 type", 0)->val.i;
-  potmeter2.cal_a = config_get_by_name("POTMETER2 cal_a", 0)->val.f;
-  potmeter2.cal_b = config_get_by_name("POTMETER2 cal_b", 0)->val.f;
+  potmeter2.device_id = config_get_u8("POTMETER2 device id", 0);
+  potmeter2.channel = config_get_u8("POTMETER2 channel", 0);
+  potmeter2.frequency = config_get_f32("POTMETER2 frequency", 0.0f);
+  potmeter2.type = config_get_u8("POTMETER2 type", 0);
+  potmeter2.cal_a = config_get_f32("POTMETER2 cal_a", 0.0f);
+  potmeter2.cal_b = config_get_f32("POTMETER2 cal_b", 1.0f);
   if(potmeter2.frequency > 0 && adc1_chan_config[potmeter2.channel].available) {
     potmeter2.channel_idx = adc1_num_channels++;
     adc1_channel_map[potmeter2.channel_idx] = adc1_chan_config[potmeter2.channel].channel;
