@@ -339,6 +339,13 @@ RULESPATH = $(CHIBIOS)/os/common/startup/ARMCMx/compilers/GCC/mk
 include $(RULESPATH)/arm-none-eabi.mk
 include $(RULESPATH)/rules.mk
 
+ifneq ($(USE_LTO),no)
+  CFLAGS = $(MCFLAGS) $(OPT) $(COPT) $(CWARN) $(DEFS)
+  CPPFLAGS = $(MCFLAGS) $(OPT) $(CPPOPT) $(CPPWARN) $(DEFS)
+  CFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
+  CPPFLAGS += -MD -MP -MF $(DEPDIR)/$(@F).d
+endif
+
 #
 # Common rules
 ##############################################################################

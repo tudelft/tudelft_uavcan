@@ -131,9 +131,9 @@ static THD_FUNCTION(ie_fuelcell_send_thd, arg) {
 
 void ie_fuelcell_init(void) {
     // Get the configuration
-    ie_fuelcell.vt_delay = 1000.f / config_get_by_name("IE FC frequency", 0)->val.f;
-    uint8_t port = config_get_by_name("IE FC port", 0)->val.i;
-    ie_fuelcell.uart_cfg.speed = config_get_by_name("IE FC baud", 0)->val.i;
+    ie_fuelcell.vt_delay = 1000.f / config_get_f32("IE FC frequency", 10.0f);
+    uint8_t port = config_get_u8("IE FC port", 0);
+    ie_fuelcell.uart_cfg.speed = config_get_u32("IE FC baud", 9600);
     ie_fuelcell.uart_cfg.cr1 = USART_CR1_UE | USART_CR1_RE;
 
     // Configure the port
