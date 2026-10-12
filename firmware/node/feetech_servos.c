@@ -305,12 +305,11 @@ static bool feetech_read_data(struct feetech_bus_t *bus, uint8_t servo_id, uint8
 }
 
 static void feetech_publish_status(const struct feetech_servo_channel_t *ch, bool has_position, uint16_t position_raw,
-                                   bool has_speed, float speed, int16_t speed_raw,
+                                   bool has_speed, float speed,
                                    bool has_load, float load,
                                    bool has_current, float current,
                                    bool has_temperature, float temperature_c) {
     static uint8_t actuator_transfer_id;
-    static uint8_t esc_transfer_id;
     static uint8_t temp_transfer_id;
 
     if (ch == NULL) {
@@ -319,7 +318,7 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
 
     if (has_position) {
         struct uavcan_equipment_actuator_Status status;
-        status.actuator_id = ch->id;
+        status.actuator_id = ch->index;
         status.position = ((float)position_raw / 4095.0f) * 2.0f - 1.0f;
         status.force = has_load ? load : (has_current ? current : 0.0f);
         status.speed = has_speed ? speed : 0.0f;
@@ -330,26 +329,6 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
         uavcanBroadcastAll(UAVCAN_EQUIPMENT_ACTUATOR_STATUS_SIGNATURE,
                            UAVCAN_EQUIPMENT_ACTUATOR_STATUS_ID,
                            &actuator_transfer_id,
-                           CANARD_TRANSFER_PRIORITY_LOW,
-                           buffer,
-                           total_size);
-    }
-
-    if (has_current || has_temperature || has_speed) {
-        struct uavcan_equipment_esc_Status esc_status;
-        esc_status.error_count = ch->timeout_count;
-        esc_status.voltage = 0.0f;
-        esc_status.current = has_current ? current : 0.0f;
-        esc_status.temperature = has_temperature ? (temperature_c + FEETECH_TEMP_TO_KELVIN_OFFSET) : 0.0f;
-        esc_status.rpm = has_speed ? speed_raw : 0;
-        esc_status.power_rating_pct = 0;
-        esc_status.esc_index = ch->id;
-
-        uint8_t buffer[UAVCAN_EQUIPMENT_ESC_STATUS_MAX_SIZE];
-        uint16_t total_size = uavcan_equipment_esc_Status_encode(&esc_status, buffer);
-        uavcanBroadcastAll(UAVCAN_EQUIPMENT_ESC_STATUS_SIGNATURE,
-                           UAVCAN_EQUIPMENT_ESC_STATUS_ID,
-                           &esc_transfer_id,
                            CANARD_TRANSFER_PRIORITY_LOW,
                            buffer,
                            total_size);
@@ -391,7 +370,6 @@ static void feetech_poll_channel(struct feetech_servo_channel_t *ch) {
     bool has_current = false;
     bool has_temperature = false;
     uint16_t position_raw = 0;
-    int16_t speed_raw = 0;
     float speed = 0.0f;
     float load = 0.0f;
     float current = 0.0f;
@@ -418,8 +396,7 @@ static void feetech_poll_channel(struct feetech_servo_channel_t *ch) {
     }
 
     if (feetech_servos.fast_speed_enabled && feetech_read_data(bus, ch->id, FEETECH_REG_SPEED, 2, data)) {
-        speed_raw = feetech_decode_signed_15bit((uint16_t)(data[0] | ((uint16_t)data[1] << 8)));
-        speed = (float)speed_raw;
+        speed = (float)feetech_decode_signed_15bit((uint16_t)(data[0] | ((uint16_t)data[1] << 8)));
         has_speed = true;
     }
 
@@ -445,7 +422,7 @@ static void feetech_poll_channel(struct feetech_servo_channel_t *ch) {
     }
 
     feetech_publish_status(ch, has_position, position_raw,
-                           has_speed, speed, speed_raw,
+                           has_speed, speed,
                            has_load, load,
                            has_current, current,
                            has_temperature, temperature_c);
