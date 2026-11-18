@@ -40,7 +40,6 @@ struct feetech_servo_channel_t {
     uint8_t id;
     uint8_t index;
     uint16_t failsafe;
-    uint16_t temperature_device_id;
     uint16_t last_pos;
     uint32_t timeout_count;
     uint32_t position_poll_count;
@@ -187,7 +186,6 @@ static bool feetech_load_channel_from_config(uint8_t cfg_idx, struct feetech_ser
     out->position_poll_count = 0;
     out->last_pos = 0xFFFFU;
     out->failsafe = config_get_u16(feetech_failsafe_cfg_names[cfg_idx], 0);
-    out->temperature_device_id = (uint16_t)(1000U + out->id);
 
     out->enabled = true;
     return true;
@@ -336,7 +334,7 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
 
     if (has_temperature) {
         struct uavcan_equipment_device_Temperature temperature;
-        temperature.device_id = (ch->temperature_device_id != 0U) ? ch->temperature_device_id : (uint16_t)(1000U + ch->id);
+        temperature.device_id = ch->index;
         temperature.temperature = temperature_c + FEETECH_TEMP_TO_KELVIN_OFFSET;
         temperature.error_flags = 0;
 
