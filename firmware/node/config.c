@@ -156,6 +156,16 @@ struct config_item_t config_items[] = {
     {.name = "TFMINI frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0.0001, .max.f = 10000},
 #endif
 
+#if USE_LOAD_CELL
+/* Load cell (ADS1220) configuration */
+    {.name = "LOADCELL frequency", .type = CONFIG_TYPE_FLOAT, .val.f = 0, .def.f = 0, .min.f = 0, .max.f = 1000},
+    {.name = "LOADCELL id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 255},
+    {.name = "LOADCELL bridges", .type = CONFIG_TYPE_INT, .val.i = 1, .def.i = 1, .min.i = 1, .max.i = 2},
+    {.name = "LOADCELL gain", .type = CONFIG_TYPE_INT, .val.i = 128, .def.i = 128, .min.i = 1, .max.i = 128},
+    {.name = "LOADCELL data rate", .type = CONFIG_TYPE_INT, .val.i = 1000, .def.i = 1000, .min.i = 20, .max.i = 2000},
+    {.name = "LOADCELL cutoff (Hz)", .type = CONFIG_TYPE_FLOAT, .val.f = 5, .def.f = 5, .min.f = 0, .max.f = 1000},
+#endif
+
 #if USE_ADCS
 /* POWER ADC's configuration */
     {.name = "POWER1 device id", .type = CONFIG_TYPE_INT, .val.i = 0, .def.i = 0, .min.i = 0, .max.i = 65536},

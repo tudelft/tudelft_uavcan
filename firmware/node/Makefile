@@ -85,6 +85,9 @@ endif
 ifeq ($(USE_FAULHABER_CTRL),)
   USE_FAULHABER_CTRL = no
 endif
+ifeq ($(USE_LOAD_CELL),)
+  USE_LOAD_CELL = no
+endif
 ifeq ($(FEETECH_MAX_SERVOS),)
   FEETECH_MAX_SERVOS = 4
 endif
@@ -210,6 +213,7 @@ CSRC = $(ALLCSRC) \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.BatteryInfo.c \
        $(DSDLC_SRC_DIR)/uavcan.equipment.power.CircuitStatus.c \
        $(DSDLC_SRC_DIR)/pprz.equipment.fuelcell.Status.c \
+       $(DSDLC_SRC_DIR)/pprz.equipment.loadcell.Measurement.c \
        flash.c config.c uavcan.c node.c servos.c \
          feetech_servos.c \
        main.c
@@ -231,6 +235,9 @@ ifeq ($(USE_IE_FUELCELL),yes)
 endif
 ifeq ($(USE_FAULHABER_CTRL),yes)
   CSRC += faulhaber_ctrl.c
+endif
+ifeq ($(USE_LOAD_CELL),yes)
+  CSRC += load_cell.c
 endif
 
 # C++ sources that can be compiled in ARM or THUMB mode depending on the global
@@ -311,6 +318,11 @@ ifeq ($(USE_FAULHABER_CTRL),yes)
 UDEFS += -DUSE_FAULHABER_CTRL=1
 else
 UDEFS += -DUSE_FAULHABER_CTRL=0
+endif
+ifeq ($(USE_LOAD_CELL),yes)
+UDEFS += -DUSE_LOAD_CELL=1
+else
+UDEFS += -DUSE_LOAD_CELL=0
 endif
 #UDEFS += -DCH_DBG_SYSTEM_STATE_CHECK=TRUE -DCH_DBG_ENABLE_CHECKS=TRUE -DCH_DBG_ENABLE_ASSERTS=TRUE
 #UDEFS += -DCH_DBG_ENABLE_STACK_CHECK=TRUE -DCH_DBG_FILL_THREADS=TRUE

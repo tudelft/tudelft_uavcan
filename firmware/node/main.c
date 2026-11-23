@@ -42,6 +42,9 @@
 #if USE_IE_FUELCELL
 #include "ie_fuelcell.h"
 #endif
+#if USE_LOAD_CELL
+#include "load_cell.h"
+#endif
 
 /*===========================================================================*/
 /* Generic code.                                                             */
@@ -88,6 +91,9 @@ int main(void) {
 #endif
 #if USE_IE_FUELCELL
   ie_fuelcell_init();
+#endif
+#if USE_LOAD_CELL
+  load_cell_init();
 #endif
 
   /*

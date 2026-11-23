@@ -98,6 +98,15 @@
 #define ADC_POWER2_CHANNEL  9
 #define ADC_POWER2_MUL      23.0f
 
+/* Load cell ADC (ADS1220) on SPI1, shares pins with ADC5, SERVO8, SERVO9 and SERVO10 */
+#define LOADCELL_SPI              SPI1
+#define LOADCELL_SPI_RCC_ENABLE() rccEnableSPI1(true)
+#define LOADCELL_SPI_BR           (SPI_CR1_BR_1 | SPI_CR1_BR_0) // PCLK2 36MHz / 16 = 2.25MHz
+#define LOADCELL_SCK_LINE         PAL_LINE(GPIOA, 5U)  // ADC5
+#define LOADCELL_MISO_LINE        PAL_LINE(GPIOA, 6U)  // SERVO8 (also DRDY)
+#define LOADCELL_MOSI_LINE        PAL_LINE(GPIOA, 7U)  // SERVO9
+#define LOADCELL_CS_LINE          PAL_LINE(GPIOA, 1U)  // SERVO10
+
 /*
  * I/O ports initial setup, this configuration is established soon after reset
  * in the initialization code.
