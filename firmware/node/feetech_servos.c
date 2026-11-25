@@ -2,6 +2,7 @@
 
 #include "config.h"
 
+#include <math.h>
 #include <string.h>
 
 #define FEETECH_MAX_BUSES 3
@@ -25,6 +26,9 @@
 #define FEETECH_STS_POS_MAX 4095U
 #define FEETECH_RAW_CMD_MIN (-8192)
 #define FEETECH_RAW_CMD_MAX 8191
+/* STS/SMS magnetic encoder: 4096 steps per turn, centred at 2048 */
+#define FEETECH_STS_POS_CENTER 2048
+#define FEETECH_STS_RAD_PER_STEP (2.0f * 3.14159265f / 4096.0f)
 
 #define FEETECH_TEMP_TO_KELVIN_OFFSET 273.15f
 #define FEETECH_REG_PRESENT_POSITION 56U
@@ -310,6 +314,10 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
     static uint8_t actuator_transfer_id;
     static uint8_t temp_transfer_id;
 
+    /* actuator.Status has no current field, and current is no force */
+    (void)has_current;
+    (void)current;
+
     if (ch == NULL) {
         return;
     }
@@ -317,9 +325,11 @@ static void feetech_publish_status(const struct feetech_servo_channel_t *ch, boo
     if (has_position) {
         struct uavcan_equipment_actuator_Status status;
         status.actuator_id = ch->index;
-        status.position = ((float)position_raw / 4095.0f) * 2.0f - 1.0f;
-        status.force = has_load ? load : (has_current ? current : 0.0f);
-        status.speed = has_speed ? speed : 0.0f;
+        /* position in rad from the encoder centre, speed in rad/s (raw speed is in steps/s),
+         * force is the load as a fraction of the maximum torque (no Nm without the servo model), NAN when unknown */
+        status.position = (float)((int32_t)position_raw - FEETECH_STS_POS_CENTER) * FEETECH_STS_RAD_PER_STEP;
+        status.force = has_load ? load : NAN;
+        status.speed = has_speed ? speed * FEETECH_STS_RAD_PER_STEP : NAN;
         status.power_rating_pct = UAVCAN_EQUIPMENT_ACTUATOR_STATUS_POWER_RATING_PCT_UNKNOWN;
 
         uint8_t buffer[UAVCAN_EQUIPMENT_ACTUATOR_STATUS_MAX_SIZE];
