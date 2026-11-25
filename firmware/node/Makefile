@@ -86,7 +86,7 @@ ifeq ($(USE_FAULHABER_CTRL),)
   USE_FAULHABER_CTRL = no
 endif
 ifeq ($(USE_LOAD_CELL),)
-  USE_LOAD_CELL = no
+  USE_LOAD_CELL = yes
 endif
 ifeq ($(FEETECH_MAX_SERVOS),)
   FEETECH_MAX_SERVOS = 4
